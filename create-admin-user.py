@@ -19,9 +19,12 @@ def create_admin_user():
     
     # Check if user with email 'admin@admin.local' already exists
     if User.objects.filter(email='admin@admin.local').exists():
-        print("User 'admin@admin.local' already exists. Updating password...")
+        import os
+        print("User 'admin@admin.local' already exists. Updating password from env...")
         user = User.objects.get(email='admin@admin.local')
-        user.set_password('REDACTED')
+        pwd = os.environ.get('TEST_ADMIN_PASSWORD', '')
+        if pwd:
+            user.set_password(pwd)
         user.save()
         print(f"✓ Password updated for user: {user.email}")
     else:
@@ -55,15 +58,18 @@ def create_admin_user():
                 is_superuser=True
             )
             
-            # Set the specific password
-            user.set_password('REDACTED')
+            # Set password from env if provided
+            import os
+            pwd = os.environ.get('TEST_ADMIN_PASSWORD', '')
+            if pwd:
+                user.set_password(pwd)
             user.save()
             
             print(f"✓ Created admin user: {user.email}")
             print(f"  - Name: {user.get_full_name()}")
             print(f"  - Role: {user.role}")
             print(f"  - Company: {user.company.name if user.company else 'None'}")
-            print(f"  - Password: REDACTED")
+            print(f"  - Password: [from env TEST_ADMIN_PASSWORD]")
             
         except Exception as e:
             print(f"Error creating user: {e}")
@@ -101,7 +107,7 @@ def main():
         
         print("\n🎉 You can now login with:")
         print("  Email: admin@admin.local")
-        print("  Password: REDACTED")
+        print("  Password: [from env TEST_ADMIN_PASSWORD]")
         print("\nAccess your application at: http://10.10.10.15:8000/login/")
         
     else:

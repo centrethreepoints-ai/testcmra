@@ -63,10 +63,11 @@ def test_web_authentication():
             print(f"   CSRF token found: {csrf_token[:10]}...")
             
             # Attempt login
+            import os
             login_data = {
                 'csrfmiddlewaretoken': csrf_token,
-                'username': 'admin',
-                'password': 'REDACTED'
+                'username': os.environ.get('TEST_ADMIN_USERNAME', ''),
+                'password': os.environ.get('TEST_ADMIN_PASSWORD', '')
             }
             
             login_response = session.post(f"{base_url}/login/", data=login_data, allow_redirects=False)
@@ -112,10 +113,11 @@ def test_web_authentication():
             print(f"   CSRF token found: {csrf_token[:10]}...")
             
             # Attempt login
+            import os
             login_data = {
                 'csrfmiddlewaretoken': csrf_token,
-                'username': 'admin@admin.local',
-                'password': 'REDACTED'
+                'username': os.environ.get('TEST_ADMIN_EMAIL', ''),
+                'password': os.environ.get('TEST_ADMIN_PASSWORD', '')
             }
             
             login_response = session.post(f"{base_url}/login/", data=login_data, allow_redirects=False)
@@ -153,9 +155,8 @@ def main():
         print("\n🌐 You can now access your application at:")
         print("  http://10.10.10.15:8000/login/")
         print("\n🔑 Login credentials:")
-        print("  Username: admin")
-        print("  OR Email: admin@admin.local")
-        print("  Password: REDACTED")
+        print("  Username: $TEST_ADMIN_USERNAME or Email: $TEST_ADMIN_EMAIL")
+        print("  Password: [from env TEST_ADMIN_PASSWORD]")
     else:
         print("\n❌ Some tests failed. Check the service status.")
         sys.exit(1)

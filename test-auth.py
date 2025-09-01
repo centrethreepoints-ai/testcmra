@@ -20,11 +20,11 @@ def test_authentication():
     print("🔐 Testing Authentication Methods")
     print("=" * 50)
     
-    # Test credentials
+    # Test credentials (from environment)
+    import os
     test_credentials = [
-        ('admin', 'REDACTED', 'Username'),
-        ('admin@admin.local', 'REDACTED', 'Email'),
-        ('admin@top3.ma', 'REDACTED', 'Email (existing)'),
+        (os.environ.get('TEST_ADMIN_USERNAME', ''), os.environ.get('TEST_ADMIN_PASSWORD', ''), 'Username'),
+        (os.environ.get('TEST_ADMIN_EMAIL', ''), os.environ.get('TEST_ADMIN_PASSWORD', ''), 'Email'),
     ]
     
     for identifier, password, method in test_credentials:
@@ -77,8 +77,8 @@ def test_login_form():
     
     # Test form with username
     form_data = {
-        'username': 'admin',
-        'password': 'REDACTED'
+        'username': os.environ.get('TEST_ADMIN_USERNAME', ''),
+        'password': os.environ.get('TEST_ADMIN_PASSWORD', '')
     }
     
     form = CustomAuthenticationForm(request, data=form_data)
@@ -92,8 +92,8 @@ def test_login_form():
     
     # Test form with email
     form_data = {
-        'username': 'admin@admin.local',
-        'password': 'REDACTED'
+        'username': os.environ.get('TEST_ADMIN_EMAIL', ''),
+        'password': os.environ.get('TEST_ADMIN_PASSWORD', '')
     }
     
     form = CustomAuthenticationForm(request, data=form_data)
@@ -118,9 +118,8 @@ def main():
     
     print("\n🎉 Authentication test completed!")
     print("\n💡 Login Summary:")
-    print("  - Username 'admin' + password 'REDACTED' ✅")
-    print("  - Email 'admin@admin.local' + password 'REDACTED' ✅")
-    print("  - Email 'admin@top3.ma' + password 'REDACTED' ✅")
+    print("  - Username + password from env ✅")
+    print("  - Email + password from env ✅")
     
     print("\n🌐 Access your application at: http://10.10.10.15:8000/login/")
 
