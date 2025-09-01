@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h3 class="mb-0">Bons de commande</h3>
+  </div>
+  <div class="mb-3">
+    <a href="{% url 'billing:purchase_order_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Nouveau bon de commande</a>
+  </div>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+      <select name="party" class="form-select">
+        <option value="">-- Toutes les parties --</option>
+        {% for p in parties %}
+          <option value="{{ p.id }}" {% if party_selected == p.id|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <div class="input-group">
+        <span class="input-group-text">Du</span>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control" placeholder="Du">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="input-group">
+        <span class="input-group-text">Au</span>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control" placeholder="Au">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <select name="status" class="form-select">
+        <option value="">-- Statut --</option>
+        <option value="draft" {% if status_selected == 'draft' %}selected{% endif %}>Brouillon</option>
+        <option value="sent" {% if status_selected == 'sent' %}selected{% endif %}>Envoyé</option>
+        <option value="validated" {% if status_selected == 'validated' %}selected{% endif %}>Validé</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrer</button>
+    </div>
+  </form>
+
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>Numéro</th>
+        <th>Partie</th>
+        <th>Type</th>
+        <th>Statut</th>
+        <th>Date</th>
+        <th class="text-end">Total TTC</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for po in purchase_orders %}
+      <tr>
+        <td><a href="{% url 'billing:purchase_order_detail' po.pk %}">{{ po.number }}</a></td>
+        <td>{{ po.party.name }}</td>
+        <td>{% if po.order_type == 'purchase' %}<span class="badge bg-primary">Achat</span>{% else %}<span class="badge bg-success">Vente</span>{% endif %}</td>
+        <td>
+          {% if po.status == 'draft' %}<span class="badge bg-secondary">Brouillon</span>
+          {% elif po.status == 'sent' %}<span class="badge bg-info text-dark">Envoyé</span>
+          {% elif po.status == 'validated' %}<span class="badge bg-warning text-dark">Confirmé</span>
+          {% elif po.status == 'approved' %}<span class="badge bg-success">Approuvé</span>
+          {% else %}<span class="badge bg-light text-dark">{{ po.status }}</span>{% endif %}
+        </td>
+        <td>{{ po.issue_date }}</td>
+        <td class="text-end"><span class="js-total-ttc" data-amount="{{ po.total_ttc }}">{{ po.total_ttc|floatformat:2 }}</span></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center text-muted">Aucun bon de commande</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="3" class="text-end">Total filtré</th>
+        <th class="text-end"><span id="js-filtered-total">{{ total_sum|floatformat:2 }}</span></th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function computeFilteredTotal() {
+    const amounts = document.querySelectorAll('tbody .js-total-ttc');
+    let total = 0;
+    amounts.forEach(el => {
+      const val = parseFloat(el.getAttribute('data-amount'));
+      if (!isNaN(val)) total += val;
+    });
+    const out = document.getElementById('js-filtered-total');
+    if (out) out.textContent = total.toFixed(2);
+  }
+  computeFilteredTotal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Nouveau devis</h3>
+    <a href="{% url 'billing:quote_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour à la liste
+    </a>
+  </div>
+
+  {% if form.errors or formset.non_form_errors or formset.forms|length > 0 and formset.errors %}
+  <style>
+    @keyframes pulseAlert { 0%{transform:scale(1)} 50%{transform:scale(1.01)} 100%{transform:scale(1)} }
+  </style>
+  <div class="alert alert-danger shadow-sm" style="animation:pulseAlert 0.6s ease 2">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <strong>Formulaire invalide.</strong>
+      <span>Veuillez corriger les champs en rouge ci-dessous.</span>
+    </div>
+    {% if formset.non_form_errors %}
+      <div class="mt-2 small">{{ formset.non_form_errors }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-person"></i> Client & conditions</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Client</label>
+            {{ form.party|add_class:'form-select'|add_error_class:'is-invalid' }}
+            {% if form.party.errors %}
+              <div class="invalid-feedback d-block">{{ form.party.errors.0 }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Validité (jours)</label>
+            {{ form.validity_days|add_class:'form-select'|add_error_class:'is-invalid' }}
+            {% if form.validity_days.errors %}
+              <div class="invalid-feedback d-block">{{ form.validity_days.errors.0 }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Remise (%)</label>
+            {{ form.discount_percent|add_class:'form-control'|add_error_class:'is-invalid' }}
+            {% if form.discount_percent.errors %}
+              <div class="invalid-feedback d-block">{{ form.discount_percent.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-list-ul"></i> Lignes</strong>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Les colonnes s'ajustent automatiquement</span>
+          <button class="btn btn-sm btn-outline-primary"
+                  type="button"
+                  hx-get="{% url 'billing:quote_add_line' %}"
+                  hx-include="#id_lines-TOTAL_FORMS"
+                  hx-target="#lines-tbody"
+                  hx-swap="beforeend">
+            <i class="bi bi-plus-circle"></i> Ajouter une ligne
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th style="width: 22%">Produit</th>
+                <th style="width: 28%">Description</th>
+                <th style="width: 10%" class="text-end">Qté</th>
+                <th style="width: 14%" class="text-end">PU HT</th>
+                <th style="width: 10%" class="text-end">Remise %</th>
+                <th style="width: 12%">TVA</th>
+              </tr>
+            </thead>
+            <tbody id="lines-tbody">
+              {{ formset.management_form }}
+              {% for lf in formset %}
+              <tr class="line-row {% if lf.errors %}table-danger{% endif %}"
+                  hx-get="{% url 'billing:product_price' %}?index={{ forloop.counter0 }}"
+                  hx-trigger="change from:.line-product"
+                  hx-include="closest tr"
+                  hx-swap="none">
+                <td>
+                  {{ lf.product|add_class:'form-select line-product'|add_error_class:'is-invalid' }}
+                  {% if lf.product.errors %}<div class="invalid-feedback d-block">{{ lf.product.errors.0 }}</div>{% endif %}
+                </td>
+                <td>
+                  <span id="description-{{ forloop.counter0 }}">{{ lf.description|add_class:'form-control'|add_error_class:'is-invalid' }}</span>
+                  {% if lf.description.errors %}<div class="invalid-feedback d-block">{{ lf.description.errors.0 }}</div>{% endif %}
+                </td>
+                <td>
+                  {{ lf.quantity|add_class:'form-control text-end'|add_error_class:'is-invalid' }}
+                  {% if lf.quantity.errors %}<div class="invalid-feedback d-block">{{ lf.quantity.errors.0 }}</div>{% endif %}
+                </td>
+                <td>
+                  <span id="unit-price-{{ forloop.counter0 }}">{{ lf.unit_price_ht|add_class:'form-control text-end line-unit-price'|add_error_class:'is-invalid' }}</span>
+                  {% if lf.unit_price_ht.errors %}<div class="invalid-feedback d-block">{{ lf.unit_price_ht.errors.0 }}</div>{% endif %}
+                </td>
+                <td>
+                  {{ lf.discount_percent|add_class:'form-control text-end'|add_error_class:'is-invalid' }}
+                  {% if lf.discount_percent.errors %}<div class="invalid-feedback d-block">{{ lf.discount_percent.errors.0 }}</div>{% endif %}
+                </td>
+                <td>
+                  {{ lf.tax_rate|add_class:'form-select'|add_error_class:'is-invalid' }}
+                  {% if lf.tax_rate.errors %}<div class="invalid-feedback d-block">{{ lf.tax_rate.errors.0 }}</div>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="text-muted small">Le prix et la description se préremplissent selon le produit.</div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-card-text"></i> Notes & conditions</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Notes</label>
+            {{ form.notes|add_class:'form-control'|add_error_class:'is-invalid' }}
+            {% if form.notes.errors %}<div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Retenue à la source (%)</label>
+            {{ form.withholding_tax_percent|add_class:'form-control'|add_error_class:'is-invalid' }}
+            {% if form.withholding_tax_percent.errors %}<div class="invalid-feedback d-block">{{ form.withholding_tax_percent.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Conditions</label>
+            {{ form.terms|add_class:'form-control'|add_error_class:'is-invalid' }}
+            {% if form.terms.errors %}<div class="invalid-feedback d-block">{{ form.terms.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <a href="{% url 'billing:quote_list' %}" class="btn btn-light">Annuler</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-save"></i> Enregistrer le devis
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

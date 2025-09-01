@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Supprimer le taux de TVA</h3>
+  <p>Confirmez la suppression de "{{ object.name }} ({{ object.rate }}%)".</p>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Confirmer</button>
+    <a href="{% url 'catalog:tax_rate_list' %}" class="btn btn-secondary">Annuler</a>
+  </form>
+</div>
+{% endblock %}
+

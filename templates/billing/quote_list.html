@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Devis - Facturation{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header Section with Beautiful Design -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-gradient-primary text-white shadow-lg border-0">
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h1 class="h2 mb-2">
+                <i class="bi bi-file-earmark-text me-3"></i>Gestion des Devis
+              </h1>
+              <p class="mb-0 opacity-75">
+                Créez, gérez et suivez vos devis commerciaux avec une interface moderne et intuitive
+              </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <a href="{% url 'billing:quote_create' %}" class="btn btn-light btn-lg">
+                <i class="bi bi-plus-circle me-2"></i>Nouveau Devis
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards Row -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Total Devis
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ total_quotes }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-file-earmark-text fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Devis Validés
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ validated_count }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Valeur Totale
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ total_sum|floatformat:2 }} MAD
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-currency-exchange fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                En Attente
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ pending_count }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-clock fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Section -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="bi bi-funnel me-2"></i>Filtres Avancés
+      </h6>
+      <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+        <i class="bi bi-chevron-down"></i> Afficher/Masquer
+      </button>
+    </div>
+    
+    <div class="collapse show" id="filterCollapse">
+      <div class="card-body">
+        <form method="get" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label fw-bold text-muted">
+              <i class="bi bi-person me-1"></i>Client
+            </label>
+            <input type="text" name="client" value="{{ client_query }}" class="form-control form-control-lg" placeholder="Nom du client...">
+          </div>
+          
+          <div class="col-md-2">
+            <label class="form-label fw-bold text-muted">
+              <i class="bi bi-calendar me-1"></i>Date début
+            </label>
+            <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-lg">
+          </div>
+          
+          <div class="col-md-2">
+            <label class="form-label fw-bold text-muted">
+              <i class="bi bi-calendar me-1"></i>Date fin
+            </label>
+            <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-lg">
+          </div>
+          
+          <div class="col-md-2">
+            <label class="form-label fw-bold text-muted">
+              <i class="bi bi-flag me-1"></i>Statut
+            </label>
+            <select name="status" class="form-select form-select-lg">
+              <option value="">Tous les statuts</option>
+              <option value="draft" {% if status_selected == 'draft' %}selected{% endif %}>
+                <span class="badge bg-secondary">Brouillon</span>
+              </option>
+              <option value="sent" {% if status_selected == 'sent' %}selected{% endif %}>
+                <span class="badge bg-info">Envoyé</span>
+              </option>
+              <option value="validated" {% if status_selected == 'validated' %}selected{% endif %}>
+                <span class="badge bg-success">Validé</span>
+              </option>
+            </select>
+          </div>
+          
+          <div class="col-md-3 d-flex align-items-end">
+            <div class="d-grid gap-2 w-100">
+              <button class="btn btn-primary btn-lg" type="submit">
+                <i class="bi bi-search me-2"></i>Appliquer les filtres
+              </button>
+              <a href="{% url 'billing:quote_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise me-2"></i>Réinitialiser
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quotes Table -->
+  <div class="card shadow">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="bi bi-list-ul me-2"></i>Liste des Devis
+      </h6>
+      <div class="d-flex gap-2 align-items-center">
+        <input type="text" name="search" value="{{ search_query }}" class="form-control form-control-sm" placeholder="Rechercher par numéro ou client..." form="headerSearchForm">
+        <form id="headerSearchForm" method="get"></form>
+        <span class="badge bg-primary fs-6">{{ quotes.count }} devis trouvés</span>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle" id="quotesTable">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col" style="width: 150px;">
+                <i class="bi bi-hash me-1"></i>Numéro
+              </th>
+              <th scope="col" style="width: 200px;">
+                <i class="bi bi-person me-1"></i>Client
+              </th>
+              <th scope="col" style="width: 120px;">
+                <i class="bi bi-calendar me-1"></i>Date
+              </th>
+              <th scope="col" style="width: 120px;">
+                <i class="bi bi-flag me-1"></i>Statut
+              </th>
+              <th scope="col" class="text-end" style="width: 120px;">
+                <i class="bi bi-currency-dollar me-1"></i>Total TTC
+              </th>
+              <th scope="col" class="text-center" style="width: 150px;">
+                <i class="bi bi-gear me-1"></i>Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in quotes %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm me-2">
+                    <i class="bi bi-file-earmark-text text-primary"></i>
+                  </div>
+                  <div>
+                    <a href="{% url 'billing:quote_detail' q.pk %}" class="text-decoration-none fw-bold">
+                      {{ q.number }}
+                    </a>
+                    <br><small class="text-muted">{{ q.sequence_code }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm me-2">
+                    <i class="bi bi-person text-success"></i>
+                  </div>
+                  <span class="fw-bold">{{ q.party.name }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark">
+                  <i class="bi bi-calendar-event me-1"></i>
+                  {{ q.issue_date|date:"d/m/Y" }}
+                </span>
+              </td>
+              <td>
+                {% if q.is_converted %}
+                  <span class="badge bg-success">
+                    <i class="bi bi-check-circle me-1"></i>Converti
+                  </span>
+                {% else %}
+                  {% if q.status == 'sent' %}
+                    <span class="badge bg-info">
+                      <i class="bi bi-send me-1"></i>Envoyé
+                    </span>
+                  {% elif q.status == 'approved' %}
+                    <span class="badge bg-primary">
+                      <i class="bi bi-thumbs-up me-1"></i>Approuvé
+                    </span>
+                  {% elif q.status == 'validated' %}
+                    <span class="badge bg-success">
+                      <i class="bi bi-check-circle me-1"></i>Validé
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary">
+                      <i class="bi bi-pencil me-1"></i>Brouillon
+                    </span>
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <span class="fw-bold fs-6 js-total-ttc" data-amount="{{ q.total_ttc }}">{{ q.total_ttc|floatformat:2 }} MAD</span>
+              </td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="{% url 'billing:quote_detail' q.pk %}" class="btn btn-outline-primary" title="Voir">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'billing:quote_edit' q.pk %}" class="btn btn-outline-warning" title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  {% if q.status == 'draft' %}
+                    <a href="{% url 'billing:quote_mark_sent' q.pk %}" class="btn btn-outline-info" title="Marquer envoyé">
+                      <i class="bi bi-send"></i>
+                    </a>
+                  {% endif %}
+                  <a href="{% url 'billing:quote_delete' q.pk %}" class="btn btn-outline-danger" title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="bi bi-file-earmark-text fa-3x mb-3"></i>
+                  <h5>Aucun devis trouvé</h5>
+                  <p>Commencez par créer votre premier devis commercial.</p>
+                  <a href="{% url 'billing:quote_create' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Créer un devis
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="4" class="text-end fs-6">Total filtré :</th>
+              <th class="text-end fs-5 fw-bold text-primary"><span id="js-filtered-total">{{ total_sum|floatformat:2 }}</span> MAD</th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+.border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+.border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+.border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fc;
+  border-radius: 50%;
+  font-size: 1.2rem;
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.5em 0.75em;
+}
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border-radius: 0.75rem;
+}
+
+.card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+.form-control-lg, .form-select-lg {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-hide alerts after 5 seconds
+  setTimeout(function() {
+    var alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+      var bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 5000);
+  
+  // Add hover effects to table rows
+  const tableRows = document.querySelectorAll('#quotesTable tbody tr');
+  tableRows.forEach(row => {
+    row.addEventListener('mouseenter', function() {
+      this.style.backgroundColor = '#f8f9fc';
+      this.style.transform = 'scale(1.01)';
+      this.style.transition = 'all 0.2s ease';
+    });
+    
+    row.addEventListener('mouseleave', function() {
+      this.style.backgroundColor = '';
+      this.style.transform = 'scale(1)';
+    });
+  });
+
+  // Compute filtered total TTC from visible rows
+  function computeFilteredTotal() {
+    const amounts = document.querySelectorAll('#quotesTable tbody .js-total-ttc');
+    let total = 0;
+    amounts.forEach(el => {
+      const val = parseFloat(el.getAttribute('data-amount'));
+      if (!isNaN(val)) total += val;
+    });
+    const out = document.getElementById('js-filtered-total');
+    if (out) out.textContent = total.toFixed(2);
+  }
+  computeFilteredTotal();
+});
+</script>
+{% endblock %}

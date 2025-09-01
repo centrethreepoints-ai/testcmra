@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Nouveau paiement (placeholder)</h3>
+  <form method="post">
+    {% csrf_token %}
+    <p class="text-muted">Formulaire à implémenter.</p>
+    <button class="btn btn-info" type="submit">Enregistrer</button>
+    <a href="{% url 'billing:payment_list' %}" class="btn btn-secondary">Annuler</a>
+  </form>
+</div>
+{% endblock %}
+

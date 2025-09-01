@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Nouvel avoir</h3>
+    <a href="{% url 'billing:credit_note_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="card mb-4">
+      <div class="card-header bg-white"><strong>Référence & client</strong></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Facture d'origine</label>
+            {{ form.original_invoice|add_class:'form-select' }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Client</label>
+            {{ form.party|add_class:'form-select' }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Type d'avoir</label>
+            {{ form.credit_type|add_class:'form-select' }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Remise (%)</label>
+            {{ form.discount_percent|add_class:'form-control' }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Retenue à la source (%)</label>
+            {{ form.withholding_tax_percent|add_class:'form-control' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <strong>Lignes</strong>
+        <button class="btn btn-sm btn-outline-primary" type="button"
+                hx-get="{% url 'billing:quote_add_line' %}"
+                hx-include="#id_lines-TOTAL_FORMS"
+                hx-target="#lines-tbody"
+                hx-swap="beforeend">
+          <i class="bi bi-plus-circle"></i> Ajouter une ligne
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th style="width:22%">Produit</th>
+                <th style="width:28%">Description</th>
+                <th style="width:10%" class="text-end">Qté</th>
+                <th style="width:14%" class="text-end">PU HT</th>
+                <th style="width:10%" class="text-end">Remise %</th>
+                <th style="width:12%">TVA</th>
+              </tr>
+            </thead>
+            <tbody id="lines-tbody">
+              {{ formset.management_form }}
+              {% for lf in formset %}
+              <tr class="line-row"
+                  hx-get="{% url 'billing:product_price' %}?index={{ forloop.counter0 }}"
+                  hx-trigger="change from:.line-product"
+                  hx-include="closest tr"
+                  hx-swap="none">
+                <td>{{ lf.product|add_class:'form-select line-product' }}</td>
+                <td><span id="description-{{ forloop.counter0 }}">{{ lf.description|add_class:'form-control' }}</span></td>
+                <td>{{ lf.quantity|add_class:'form-control text-end' }}</td>
+                <td><span id="unit-price-{{ forloop.counter0 }}">{{ lf.unit_price_ht|add_class:'form-control text-end line-unit-price' }}</span></td>
+                <td>{{ lf.discount_percent|add_class:'form-control text-end' }}</td>
+                <td>{{ lf.tax_rate|add_class:'form-select' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-white"><strong>Motif & notes</strong></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label">Motif</label>
+            {{ form.reason|add_class:'form-control' }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Notes</label>
+            {{ form.notes|add_class:'form-control' }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Conditions</label>
+            {{ form.terms|add_class:'form-control' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <a class="btn btn-light" href="{% url 'billing:credit_note_list' %}">Annuler</a>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Enregistrer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+

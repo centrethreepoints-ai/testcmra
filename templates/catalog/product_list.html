@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load catalog_filters %}
+
+{% block title %}Produits - Catalogue{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header Section -->
+  <div class="row mb-4 gradient-header">
+    <div class="col-12">
+      <div class="card bg-gradient-primary text-white shadow-lg border-0">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 class="h3 mb-1"><i class="bi bi-box me-2"></i>Catalogue des Produits</h2>
+              <p class="mb-0 opacity-75">Gérez votre inventaire et vos services</p>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="{% url 'catalog:product_create' %}" class="btn btn-light btn-lg">
+                <i class="bi bi-plus-circle me-2"></i>Nouveau Produit
+              </a>
+              <a href="{% url 'catalog:category_list' %}" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-tags me-2"></i>Catégories
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Total Produits
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ products.count }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-box fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                En Stock
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ products|length }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Stock Faible
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                0
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Valeur Stock
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ total_value|default:"0"|floatformat:2 }} MAD
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-currency-exchange fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Table -->
+  <div class="card shadow">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="bi bi-list-ul"></i> Liste des Produits
+      </h6>
+      <div class="d-flex gap-2">
+        <input type="text" class="form-control form-control-sm" placeholder="Rechercher un produit..." id="searchInput">
+        <select class="form-select form-select-sm" id="categoryFilter">
+          <option value="">Toutes les catégories</option>
+          <option value="product">Produits</option>
+          <option value="service">Services</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped" id="productsTable">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col" class="text-center" style="width: 80px;">
+                <i class="bi bi-hash"></i> Code
+              </th>
+              <th scope="col" style="width: 200px;">
+                <i class="bi bi-box"></i> Nom du Produit
+              </th>
+              <th scope="col" style="width: 120px;">
+                <i class="bi bi-tag"></i> Catégorie
+              </th>
+              <th scope="col" style="width: 100px;">
+                <i class="bi bi-type"></i> Type
+              </th>
+              <th scope="col" class="text-end" style="width: 120px;">
+                <i class="bi bi-currency-dollar"></i> Prix HT
+              </th>
+              <th scope="col" class="text-end" style="width: 120px;">
+                <i class="bi bi-percent"></i> TVA
+              </th>
+              <th scope="col" class="text-end" style="width: 120px;">
+                <i class="bi bi-currency-dollar"></i> Prix TTC
+              </th>
+              <th scope="col" class="text-center" style="width: 100px;">
+                <i class="bi bi-box-seam"></i> Stock
+              </th>
+              <th scope="col" class="text-center" style="width: 120px;">
+                <i class="bi bi-gear"></i> Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td class="text-center">
+                <span class="badge bg-primary">{{ product.code }}</span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm me-2">
+                    {% if product.product_type == 'service' %}
+                      <i class="bi bi-gear-fill text-info"></i>
+                    {% else %}
+                      <i class="bi bi-box text-primary"></i>
+                    {% endif %}
+                  </div>
+                  <div>
+                    <a href="{% url 'catalog:product_detail' product.pk %}" class="text-decoration-none fw-bold">
+                      {{ product.name }}
+                    </a>
+                    {% if product.description %}
+                      <br><small class="text-muted">{{ product.description|truncatechars:50 }}</small>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td>
+                {% if product.category %}
+                  <span class="badge bg-secondary">{{ product.category.name }}</span>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if product.product_type == 'service' %}
+                  <span class="badge bg-info">Service</span>
+                {% else %}
+                  <span class="badge bg-success">Produit</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <span class="fw-bold">{{ product.price_ht|floatformat:2 }} MAD</span>
+              </td>
+              <td class="text-end">
+                {% if product.tax_rate %}
+                  <span class="text-muted">{{ product.tax_rate.rate }}%</span>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                {% if product.tax_rate %}
+                  <span class="fw-bold text-success">
+                    {{ product.price_ht|ttc:product.tax_rate.rate }} MAD
+                  </span>
+                {% else %}
+                  <span class="text-muted">{{ product.price_ht|floatformat:2 }} MAD</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if product.product_type == 'service' %}
+                  <span class="badge bg-info">N/A</span>
+                {% else %}
+                  {% if product.current_stock <= product.min_stock %}
+                    <span class="badge bg-danger">{{ product.current_stock }}</span>
+                  {% elif product.current_stock <= product.min_stock|add:5 %}
+                    <span class="badge bg-warning">{{ product.current_stock }}</span>
+                  {% else %}
+                    <span class="badge bg-success">{{ product.current_stock }}</span>
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="{% url 'catalog:product_detail' product.pk %}" class="btn btn-outline-primary btn-sm" title="Voir">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'catalog:product_edit' product.pk %}" class="btn btn-outline-warning btn-sm" title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="{% url 'catalog:product_delete' product.pk %}" class="btn btn-outline-danger btn-sm" title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="bi bi-box fa-3x mb-3"></i>
+                  <h5>Aucun produit trouvé</h5>
+                  <p>Commencez par créer votre premier produit ou service.</p>
+                  <a href="{% url 'catalog:product_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Créer un produit
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.gradient-header h1, .gradient-header h2, .gradient-header p { color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+.border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+.border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+.border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+.border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fc;
+  border-radius: 50%;
+  font-size: 1.2rem;
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.5em 0.75em;
+}
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border-radius: 0.75rem;
+}
+
+.card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  const table = document.getElementById('productsTable');
+  const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+  
+  searchInput.addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    
+    Array.from(rows).forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+  });
+  
+  // Category filter
+  const categoryFilter = document.getElementById('categoryFilter');
+  categoryFilter.addEventListener('change', function() {
+    const selectedCategory = this.value;
+    
+    Array.from(rows).forEach(row => {
+      if (!selectedCategory || row.cells[3].textContent.toLowerCase().includes(selectedCategory.toLowerCase())) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

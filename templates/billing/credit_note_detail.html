@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Avoir {{ credit_note.number }}</h3>
+    <div class="d-flex gap-2">
+      <a href="{% url 'billing:credit_note_pdf' credit_note.pk %}" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-printer"></i> Imprimer</a>
+      <a href="{% url 'billing:credit_note_list' %}" class="btn btn-secondary">Retour</a>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header"><h6 class="mb-0">Informations de l'avoir</h6></div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tr><td><strong>Numéro:</strong></td><td>{{ credit_note.number }}</td></tr>
+            <tr><td><strong>Date d'émission:</strong></td><td>{{ credit_note.issue_date }}</td></tr>
+            <tr><td><strong>Statut:</strong></td><td><span class="badge bg-secondary">{{ credit_note.get_status_display }}</span></td></tr>
+            <tr><td><strong>Type d'avoir:</strong></td><td>{{ credit_note.get_credit_type_display }}</td></tr>
+            <tr><td><strong>Facture d'origine:</strong></td><td>{{ credit_note.original_invoice.number }}</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header"><h6 class="mb-0">Client</h6></div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tr><td><strong>Nom:</strong></td><td>{{ credit_note.party.name }}</td></tr>
+            <tr><td><strong>Email:</strong></td><td>{{ credit_note.party.email|default:"—" }}</td></tr>
+            <tr><td><strong>Téléphone:</strong></td><td>{{ credit_note.party.phone|default:"—" }}</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0">Lignes</h6></div>
+    <div class="card-body p-0">
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Produit/Service</th>
+            <th>Description</th>
+            <th class="text-center">Qté</th>
+            <th class="text-end">PU HT</th>
+            <th class="text-center">Remise %</th>
+            <th class="text-center">TVA %</th>
+            <th class="text-end">Total HT</th>
+            <th class="text-end">Total TVA</th>
+            <th class="text-end">Total TTC</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in credit_note.lines.all %}
+          <tr>
+            <td>{{ line.product.name }}</td>
+            <td>{{ line.description|default:"—" }}</td>
+            <td class="text-center">{{ line.quantity }}</td>
+            <td class="text-end">{{ line.unit_price_ht|floatformat:2 }}</td>
+            <td class="text-center">{{ line.discount_percent|floatformat:2 }}%</td>
+            <td class="text-center">{{ line.tax_rate.rate|floatformat:2 }}%</td>
+            <td class="text-end">{{ line.total_line_ht|floatformat:2 }}</td>
+            <td class="text-end">{{ line.total_line_tva|floatformat:2 }}</td>
+            <td class="text-end">{{ line.total_line_ttc|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9" class="text-center text-muted">Aucune ligne</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if credit_note.reason or credit_note.notes or credit_note.terms %}
+  <div class="row">
+    {% if credit_note.reason %}
+    <div class="col-md-6">
+      <div class="card"><div class="card-header"><h6 class="mb-0">Motif</h6></div><div class="card-body"><p class="mb-0">{{ credit_note.reason|linebreaks }}</p></div></div>
+    </div>
+    {% endif %}
+    {% if credit_note.notes %}
+    <div class="col-md-6">
+      <div class="card"><div class="card-header"><h6 class="mb-0">Notes</h6></div><div class="card-body"><p class="mb-0">{{ credit_note.notes|linebreaks }}</p></div></div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+

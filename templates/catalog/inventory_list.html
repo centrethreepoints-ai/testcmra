@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Inventaire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-clipboard-data"></i> Inventaire</h3>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'catalog:stock_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Retour</a>
+      <a href="{% url 'catalog:inventory_session_list' %}" class="btn btn-outline-dark btn-sm"><i class="bi bi-collection"></i> Sessions</a>
+      <a href="{% url 'catalog:inventory_export_csv' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-download"></i> Exporter CSV</a>
+      <form id="importForm" action="{% url 'catalog:inventory_import_csv' %}" method="post" enctype="multipart/form-data" class="d-inline">
+        {% csrf_token %}
+        <input id="importFileInput" type="file" name="file" accept=".csv" class="visually-hidden" />
+      </form>
+      <button id="importTriggerBtn" class="btn btn-outline-success btn-sm" type="button"><i class="bi bi-upload"></i> Importer CSV</button>
+      <button id="startInventoryBtn" class="btn btn-primary btn-sm" type="button"><i class="bi bi-clipboard-check"></i> Lancer</button>
+      <button id="submitInventoryBtn" class="btn btn-success btn-sm d-none" type="submit" form="inventoryForm"><i class="bi bi-check2-circle"></i> Valider</button>
+      <button id="cancelInventoryBtn" class="btn btn-outline-secondary btn-sm d-none" type="button"><i class="bi bi-x-circle"></i> Annuler</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <form id="inventoryForm" method="post">
+        {% csrf_token %}
+        <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Catégorie</th>
+              <th class="text-end">Stock Système</th>
+              <th class="text-end">Compté</th>
+              <th class="text-end">Écart</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in products %}
+            <tr>
+              <td>{{ p.name }}</td>
+              <td>{{ p.category.name|default:'—' }}</td>
+              <td class="text-end"><span class="system-stock" data-stock="{{ p.current_stock }}">{{ p.current_stock }}</span></td>
+              <td class="text-end" style="max-width:120px">
+                <input type="number" min="0" class="form-control form-control-sm counted-input" name="counted_{{ p.id }}" value="{{ p.prefill_counted|default:'' }}" placeholder="{{ p.current_stock }}" disabled>
+              </td>
+              <td class="text-end"><span class="variance text-muted">0</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aucun produit à inventorier</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const startBtn = document.getElementById('startInventoryBtn');
+  const submitBtn = document.getElementById('submitInventoryBtn');
+  const cancelBtn = document.getElementById('cancelInventoryBtn');
+  const importBtn = document.getElementById('importTriggerBtn');
+  const importInput = document.getElementById('importFileInput');
+  const importForm = document.getElementById('importForm');
+  const inputs = document.querySelectorAll('.counted-input');
+
+  function updateVariance(row) {
+    const sys = parseInt(row.querySelector('.system-stock').dataset.stock) || 0;
+    const input = row.querySelector('.counted-input');
+    const counted = parseInt(input.value) || 0;
+    const diff = counted - sys;
+    const varianceEl = row.querySelector('.variance');
+    varianceEl.textContent = diff;
+    varianceEl.className = 'variance ' + (diff === 0 ? 'text-muted' : (diff > 0 ? 'text-success' : 'text-danger'));
+  }
+
+  startBtn.addEventListener('click', function(){
+    inputs.forEach(i => { i.disabled = false; });
+    submitBtn.classList.remove('d-none');
+    cancelBtn.classList.remove('d-none');
+    startBtn.classList.add('d-none');
+  });
+
+  cancelBtn.addEventListener('click', function(){
+    inputs.forEach(i => { i.value = ''; i.disabled = true; });
+    document.querySelectorAll('.variance').forEach(v => { v.textContent = '0'; v.className = 'variance text-muted'; });
+    submitBtn.classList.add('d-none');
+    cancelBtn.classList.add('d-none');
+    startBtn.classList.remove('d-none');
+  });
+
+  inputs.forEach(inp => {
+    inp.addEventListener('input', function(){
+      updateVariance(this.closest('tr'));
+    });
+  });
+
+  importBtn.addEventListener('click', function(){
+    importInput.click();
+  });
+  importInput.addEventListener('change', function(){
+    if (importInput.files.length > 0) {
+      importForm.submit();
+    }
+  });
+});
+</script>
+{% endblock %}
+

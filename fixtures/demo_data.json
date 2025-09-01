@@ -1,0 +1,339 @@
+[
+    {
+        "model": "companies.company",
+        "pk": 1,
+        "fields": {
+            "name": "Top3 SARL",
+            "ice": "123456789",
+            "if_field": "987654321",
+            "rc": "RC123456",
+            "cnss": "CNSS123456",
+            "address": "123 Avenue Mohammed V, Quartier Hassan",
+            "city": "Casablanca",
+            "postal_code": "20000",
+            "country": "Maroc",
+            "phone": "+212 5 22 12 34 56",
+            "email": "contact@top3.ma",
+            "website": "https://www.top3.ma",
+            "default_currency": "MAD",
+            "current_fiscal_year": "2024-2025",
+            "preferences": {
+                "invoice_terms": "Paiement à 30 jours",
+                "default_language": "fr",
+                "timezone": "Africa/Casablanca"
+            },
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "companies.sequence",
+        "pk": 1,
+        "fields": {
+            "company": 1,
+            "code": "FAC",
+            "name": "Factures",
+            "pattern": "FAC-{year}-{seq:04d}",
+            "next_number": 1,
+            "reset_yearly": true,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "companies.sequence",
+        "pk": 2,
+        "fields": {
+            "company": 1,
+            "code": "DEV",
+            "name": "Devis",
+            "pattern": "DEV-{year}-{seq:04d}",
+            "next_number": 1,
+            "reset_yearly": true,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "companies.sequence",
+        "pk": 3,
+        "fields": {
+            "company": 1,
+            "code": "BC",
+            "name": "Bons de commande",
+            "pattern": "BC-{year}-{seq:04d}",
+            "next_number": 1,
+            "reset_yearly": true,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "companies.sequence",
+        "pk": 4,
+        "fields": {
+            "company": 1,
+            "code": "AVOIR",
+            "name": "Avoirs",
+            "pattern": "AVOIR-{year}-{seq:04d}",
+            "next_number": 1,
+            "reset_yearly": true,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.taxrate",
+        "pk": 1,
+        "fields": {
+            "name": "TVA 20%",
+            "rate": "20.00",
+            "code": "TVA20",
+            "is_active": true,
+            "company": 1,
+            "description": "Taux de TVA standard marocain",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.taxrate",
+        "pk": 2,
+        "fields": {
+            "name": "TVA 10%",
+            "rate": "10.00",
+            "code": "TVA10",
+            "is_active": true,
+            "company": 1,
+            "description": "Taux de TVA réduit",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.taxrate",
+        "pk": 3,
+        "fields": {
+            "name": "TVA 7%",
+            "rate": "7.00",
+            "code": "TVA7",
+            "is_active": true,
+            "company": 1,
+            "description": "Taux de TVA réduit pour certains services",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.taxrate",
+        "pk": 4,
+        "fields": {
+            "name": "Exonéré",
+            "rate": "0.00",
+            "code": "EXO",
+            "is_active": true,
+            "company": 1,
+            "description": "Produits et services exonérés de TVA",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.productcategory",
+        "pk": 1,
+        "fields": {
+            "name": "Services informatiques",
+            "description": "Services de développement et maintenance informatique",
+            "company": 1,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.productcategory",
+        "pk": 2,
+        "fields": {
+            "name": "Matériel informatique",
+            "description": "Ordinateurs, imprimantes et accessoires",
+            "company": 1,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.product",
+        "pk": 1,
+        "fields": {
+            "code": "DEV-WEB",
+            "name": "Développement site web",
+            "description": "Création de site web professionnel avec CMS",
+            "type": "service",
+            "price_ht": "5000.00",
+            "tax_rate": 1,
+            "has_stock": false,
+            "unit": "projet",
+            "category": 1,
+            "company": 1,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.product",
+        "pk": 2,
+        "fields": {
+            "code": "MAINT-INFO",
+            "name": "Maintenance informatique",
+            "description": "Service de maintenance préventive et curative",
+            "type": "service",
+            "price_ht": "800.00",
+            "tax_rate": 1,
+            "has_stock": false,
+            "unit": "mois",
+            "category": 1,
+            "company": 1,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "catalog.product",
+        "pk": 3,
+        "fields": {
+            "code": "PC-PRO",
+            "name": "Ordinateur professionnel",
+            "description": "PC de bureau haute performance pour professionnels",
+            "type": "product",
+            "price_ht": "12000.00",
+            "tax_rate": 1,
+            "has_stock": true,
+            "stock_quantity": 5,
+            "min_stock": 2,
+            "unit": "pièce",
+            "category": 2,
+            "company": 1,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "crm.party",
+        "pk": 1,
+        "fields": {
+            "name": "Entreprise ABC",
+            "ice": "ICE123456",
+            "if_field": "IF123456",
+            "rc": "RC123456",
+            "is_customer": true,
+            "is_supplier": false,
+            "party_type": "customer",
+            "email": "contact@abc.ma",
+            "phone": "+212 5 22 98 76 54",
+            "billing_address": "456 Boulevard Mohammed V, Quartier Maarif",
+            "city": "Casablanca",
+            "postal_code": "20000",
+            "country": "Maroc",
+            "payment_terms": 30,
+            "credit_limit": "50000.00",
+            "account_receivable": "411",
+            "is_active": true,
+            "company": 1,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "crm.party",
+        "pk": 2,
+        "fields": {
+            "name": "Société XYZ",
+            "ice": "ICE789012",
+            "if_field": "IF789012",
+            "rc": "RC789012",
+            "is_customer": true,
+            "is_supplier": false,
+            "party_type": "customer",
+            "email": "info@xyz.ma",
+            "phone": "+212 5 22 11 22 33",
+            "billing_address": "789 Avenue Hassan II, Quartier Anfa",
+            "city": "Casablanca",
+            "postal_code": "20000",
+            "country": "Maroc",
+            "payment_terms": 45,
+            "credit_limit": "75000.00",
+            "account_receivable": "411",
+            "is_active": true,
+            "company": 1,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "crm.party",
+        "pk": 3,
+        "fields": {
+            "name": "Fournisseur Tech",
+            "ice": "ICE345678",
+            "if_field": "IF345678",
+            "rc": "RC345678",
+            "is_customer": false,
+            "is_supplier": true,
+            "party_type": "supplier",
+            "email": "achats@tech.ma",
+            "phone": "+212 5 22 44 55 66",
+            "billing_address": "321 Rue de la Technologie, Quartier Sidi Maarouf",
+            "city": "Casablanca",
+            "postal_code": "20000",
+            "country": "Maroc",
+            "payment_terms": 30,
+            "credit_limit": "0.00",
+            "account_payable": "401",
+            "is_active": true,
+            "company": 1,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "crm.contact",
+        "pk": 1,
+        "fields": {
+            "first_name": "Ahmed",
+            "last_name": "Benali",
+            "title": "Directeur commercial",
+            "email": "ahmed.benali@abc.ma",
+            "phone": "+212 6 61 23 45 67",
+            "party": 1,
+            "is_primary": true,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "crm.contact",
+        "pk": 2,
+        "fields": {
+            "first_name": "Fatima",
+            "last_name": "Zahra",
+            "title": "Responsable achats",
+            "email": "fatima.zahra@xyz.ma",
+            "phone": "+212 6 62 34 56 78",
+            "party": 2,
+            "is_primary": true,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    }
+]

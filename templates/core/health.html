@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}État de l'application - CRM Maroc{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="bi bi-heart-pulse"></i> État de l'application
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Statut général</h5>
+                                    {% if status == 'healthy' %}
+                                        <div class="text-success">
+                                            <i class="bi bi-check-circle-fill fs-1"></i>
+                                            <p class="mt-2 mb-0">Application en bonne santé</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-danger">
+                                            <i class="bi bi-x-circle-fill fs-1"></i>
+                                            <p class="mt-2 mb-0">Problèmes détectés</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Base de données</h5>
+                                    {% if database == 'OK' %}
+                                        <div class="text-success">
+                                            <i class="bi bi-database-check fs-1"></i>
+                                            <p class="mt-2 mb-0">Connectée</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-danger">
+                                            <i class="bi bi-database-x fs-1"></i>
+                                            <p class="mt-2 mb-0">Erreur de connexion</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Cache</h5>
+                                    {% if cache == 'OK' %}
+                                        <div class="text-success">
+                                            <i class="bi bi-lightning-check fs-1"></i>
+                                            <p class="mt-2 mb-0">Fonctionnel</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-danger">
+                                            <i class="bi bi-lightning-x fs-1"></i>
+                                            <p class="mt-2 mb-0">Erreur</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Dernière vérification</h5>
+                                    <div class="text-muted">
+                                        <i class="bi bi-clock fs-1"></i>
+                                        <p class="mt-2 mb-0">{{ timestamp|date:"d/m/Y H:i:s" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary ms-2" onclick="location.reload()">
+                            <i class="bi bi-arrow-clockwise"></i> Actualiser
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

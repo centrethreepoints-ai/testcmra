@@ -1,0 +1,468 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Demandes d'Approbation{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-header h1, .gradient-header p {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+    .request-card {
+        transition: transform 0.2s;
+        border-left: 4px solid #007bff;
+    }
+    .request-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .request-card.pending {
+        border-left-color: #ffc107;
+    }
+    .request-card.approved {
+        border-left-color: #28a745;
+    }
+    .request-card.rejected {
+        border-left-color: #dc3545;
+    }
+    .request-card.cancelled {
+        border-left-color: #6c757d;
+    }
+    .status-badge {
+        font-size: 0.75em;
+        padding: 4px 8px;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .priority-high {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+    }
+    .priority-medium {
+        background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+        color: white;
+    }
+    .priority-low {
+        background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+        color: white;
+    }
+    .progress-track {
+        display: flex;
+        align-items: center;
+        margin: 15px 0;
+    }
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+    .progress-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 15px;
+        right: -50%;
+        width: 100%;
+        height: 2px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+    .progress-step.completed::after {
+        background: #28a745;
+    }
+    .progress-step.current::after {
+        background: #007bff;
+    }
+    .step-indicator {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        text-align: center;
+        line-height: 30px;
+        font-weight: bold;
+        margin: 0 auto 5px;
+        position: relative;
+        z-index: 2;
+    }
+    .step-indicator.completed {
+        background: #28a745;
+        color: white;
+    }
+    .step-indicator.current {
+        background: #007bff;
+        color: white;
+    }
+    .step-indicator.pending {
+        background: #ffc107;
+        color: #212529;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Gradient Header -->
+    <div class="row mb-4 gradient-header">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white shadow-lg border-0">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="h2 mb-2">
+                                <i class="bi bi-list-check me-3"></i>Demandes d'Approbation
+                            </h1>
+                            <p class="mb-0 opacity-75">Gérez et suivez toutes vos demandes d'approbation</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <a href="{% url 'core:workflow_list' %}" class="btn btn-outline-light me-2">
+                                <i class="bi bi-diagram-3 me-2"></i>Workflows
+                            </a>
+                            <a href="{% url 'core:create_approval_request' %}" class="btn btn-light">
+                                <i class="bi bi-plus-circle me-2"></i>Nouvelle Demande
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <h3 class="mb-0">{{ total_requests }}</h3>
+                <p class="mb-0">Total Demandes</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
+                <h3 class="mb-0">{{ pending_count }}</h3>
+                <p class="mb-0">En Attente</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <h3 class="mb-0">{{ my_approvals_count }}</h3>
+                <p class="mb-0">Mes Approbations</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                <h3 class="mb-0">{{ total_requests|add:"-"|add:pending_count }}</h3>
+                <p class="mb-0">Traitées</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Recherche</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ search_query }}" placeholder="Workflow, notes...">
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Statut</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Tous</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>En Attente</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approuvées</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejetées</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Annulées</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="workflow" class="form-label">Workflow</label>
+                <select class="form-select" id="workflow" name="workflow">
+                    <option value="">Tous</option>
+                    {% for workflow in workflows %}
+                        <option value="{{ workflow.id }}" {% if workflow_filter == workflow.id|stringformat:"s" %}selected{% endif %}>
+                            {{ workflow.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="document_type" class="form-label">Type</label>
+                <select class="form-select" id="document_type" name="document_type">
+                    <option value="">Tous</option>
+                    <option value="invoice" {% if doc_type_filter == 'invoice' %}selected{% endif %}>Factures</option>
+                    <option value="quote" {% if doc_type_filter == 'quote' %}selected{% endif %}>Devis</option>
+                    <option value="purchase_order" {% if doc_type_filter == 'purchase_order' %}selected{% endif %}>Bons de commande</option>
+                    <option value="payment" {% if doc_type_filter == 'payment' %}selected{% endif %}>Paiements</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Filtrer
+                    </button>
+                    <a href="{% url 'core:approval_request_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Approval Requests List -->
+    <div class="row">
+        {% for request in requests %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card request-card h-100 {{ request.status }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">{{ request.workflow.name }}</h6>
+                        {% if request.status == 'pending' %}
+                            <span class="badge bg-warning status-badge">En Attente</span>
+                        {% elif request.status == 'approved' %}
+                            <span class="badge bg-success status-badge">Approuvée</span>
+                        {% elif request.status == 'rejected' %}
+                            <span class="badge bg-danger status-badge">Rejetée</span>
+                        {% elif request.status == 'cancelled' %}
+                            <span class="badge bg-secondary status-badge">Annulée</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Document Type and Amount -->
+                    <div class="mb-3">
+                        <span class="badge bg-info me-2">
+                            <i class="bi bi-file-earmark"></i> {{ request.get_document_type_display }}
+                        </span>
+                        {% if request.amount > 0 %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-currency-exchange"></i> {{ request.amount|floatformat:2 }} MAD
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Progress Track -->
+                    <div class="progress-track">
+                        {% for i in request.total_levels|add:"0"|add:"1"|add:"-"|add:"1" %}
+                        <div class="progress-step {% if i < request.current_level %}completed{% elif i == request.current_level %}current{% else %}pending{% endif %}">
+                            <div class="step-indicator {% if i < request.current_level %}completed{% elif i == request.current_level %}current{% else %}pending{% endif %}">
+                                {% if i < request.current_level %}
+                                    <i class="bi bi-check"></i>
+                                {% else %}
+                                    {{ i|add:"1" }}
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">Niveau {{ i|add:"1" }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Current Level Info -->
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            Niveau actuel: {{ request.current_level }} sur {{ request.total_levels }}
+                        </small>
+                    </div>
+                    
+                    <!-- Request Details -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block">
+                            <i class="bi bi-person"></i> Demandeur: {{ request.created_by.get_full_name|default:request.created_by.username }}
+                        </small>
+                        <small class="text-muted d-block">
+                            <i class="bi bi-calendar"></i> Créée le: {{ request.created_at|date:"d/m/Y H:i" }}
+                        </small>
+                        {% if request.notes %}
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-chat"></i> {{ request.notes|truncatechars:50 }}
+                            </small>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if request.status == 'pending' and request.current_level <= user.approval_level %}
+                                <span class="badge bg-primary">Action requise</span>
+                            {% endif %}
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'core:approval_request_detail' request.pk %}" class="btn btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if request.status == 'pending' and request.current_level <= user.approval_level %}
+                                <button type="button" class="btn btn-success" 
+                                        onclick="showApprovalModal({{ request.pk }}, 'approve')">
+                                    <i class="bi bi-check"></i>
+                                </button>
+                                <button type="button" class="btn btn-danger" 
+                                        onclick="showApprovalModal({{ request.pk }}, 'reject')">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="mt-3">Aucune demande trouvée</h4>
+                <p class="text-muted">Ajustez vos filtres ou créez une nouvelle demande</p>
+                <a href="{% url 'core:create_approval_request' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nouvelle Demande
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if requests.has_other_pages %}
+    <nav aria-label="Pagination des demandes">
+        <ul class="pagination justify-content-center">
+            {% if requests.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ requests.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}&workflow={{ workflow_filter }}&document_type={{ doc_type_filter }}">Précédent</a>
+                </li>
+            {% endif %}
+            
+            {% for num in requests.paginator.page_range %}
+                {% if requests.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > requests.number|add:'-3' and num < requests.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&search={{ search_query }}&status={{ status_filter }}&workflow={{ workflow_filter }}&document_type={{ doc_type_filter }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if requests.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ requests.next_page_number }}&search={{ search_query }}&status={{ status_filter }}&workflow={{ workflow_filter }}&document_type={{ doc_type_filter }}">Suivant</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalTitle">Approbation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="approvalForm">
+                    <input type="hidden" id="requestId" name="request_id">
+                    <input type="hidden" id="actionType" name="action">
+                    
+                    <div class="mb-3">
+                        <label for="approvalNotes" class="form-label">Notes (optionnel)</label>
+                        <textarea class="form-control" id="approvalNotes" name="notes" rows="3" 
+                                  placeholder="Commentaires sur votre décision..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="submitApproval()">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    document.getElementById('status').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    document.getElementById('workflow').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    document.getElementById('document_type').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    // Search with delay
+    let searchTimeout;
+    document.getElementById('search').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.form.submit();
+        }, 500);
+    });
+});
+
+function showApprovalModal(requestId, action) {
+    document.getElementById('requestId').value = requestId;
+    document.getElementById('actionType').value = action;
+    
+    const modalTitle = document.getElementById('approvalModalTitle');
+    if (action === 'approve') {
+        modalTitle.textContent = 'Approuver la Demande';
+        modalTitle.className = 'modal-title text-success';
+    } else {
+        modalTitle.textContent = 'Rejeter la Demande';
+        modalTitle.className = 'modal-title text-danger';
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+    modal.show();
+}
+
+function submitApproval() {
+    const requestId = document.getElementById('requestId').value;
+    const action = document.getElementById('actionType').value;
+    const notes = document.getElementById('approvalNotes').value;
+    
+    // Submit via AJAX
+    fetch(`/core/approvals/${requestId}/action/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: `action=${action}&notes=${encodeURIComponent(notes)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and reload page
+            bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de la soumission');
+    });
+}
+</script>
+{% endblock %}

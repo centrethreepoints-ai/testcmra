@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Paiements</h3>
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Partie</th>
+        <th>Montant</th>
+        <th>Méthode</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td>{{ p.date }}</td>
+        <td>{{ p.party.name }}</td>
+        <td class="text-end">{{ p.amount }}</td>
+        <td>{{ p.get_method_display }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center text-muted">Aucun paiement</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+

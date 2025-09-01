@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Devis {{ quote.number }}</h3>
+    <div class="d-flex gap-2">
+      <a href="{% url 'billing:quote_pdf' quote.pk %}" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-printer"></i> Imprimer</a>
+      {% if quote.is_converted and quote.converted_po %}
+        <span class="badge bg-success d-flex align-items-center"><i class="bi bi-check-circle me-2"></i> Converti le {{ quote.converted_at|date:"d/m/Y H:i" }}</span>
+        <a href="{% url 'billing:purchase_order_detail' quote.converted_po.pk %}" class="btn btn-outline-success">
+          <i class="bi bi-clipboard-check"></i> Voir le bon de commande
+        </a>
+      {% else %}
+        <div class="btn-group">
+          {% if quote.status == 'draft' %}
+          <form method="post" action="{% url 'billing:quote_mark_sent' quote.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-info text-white" type="submit"><i class="bi bi-send"></i> Marquer comme envoyé</button>
+          </form>
+          {% endif %}
+          <form method="post" action="{% url 'billing:quote_to_po' quote.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-success" type="submit" {% if quote.status != 'sent' %}disabled title="Envoyez le devis d'abord"{% endif %}><i class="bi bi-clipboard-plus"></i> Convertir en bon de commande</button>
+          </form>
+        </div>
+      {% endif %}
+      <a href="{% url 'billing:quote_edit' quote.pk %}" class="btn btn-primary">Modifier</a>
+      <a href="{% url 'billing:quote_list' %}" class="btn btn-secondary">Retour</a>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <p><strong>Client:</strong> {{ quote.party.name }}</p>
+      <p><strong>Date:</strong> {{ quote.issue_date }} | <strong>Valide jusqu'au:</strong> {{ quote.valid_until }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header bg-white"><strong>Lignes</strong></div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Description</th>
+              <th class="text-end">Qté</th>
+              <th class="text-end">PU HT</th>
+              <th class="text-end">TVA</th>
+              <th class="text-end">Total TTC</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in lines %}
+            <tr>
+              <td>{{ l.product.name }}</td>
+              <td>{{ l.description }}</td>
+              <td class="text-end">{{ l.quantity }}</td>
+              <td class="text-end">{{ l.unit_price_ht }}</td>
+              <td class="text-end">{{ l.tax_rate.rate }}%</td>
+              <td class="text-end">{{ l.total_line_ttc }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">Aucune ligne</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

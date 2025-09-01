@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajustement des Stocks{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-header h1, .gradient-header h2, .gradient-header p { color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+    .btn-modern { border-radius: 12px; padding: 10px 16px; font-weight: 600; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .form-control-modern { border-radius: 12px; border: 2px solid #e9ecef; padding: 12px 16px; transition: all 0.3s ease; }
+    .form-control-modern:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25); }
+    .product-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .stock-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    .stock-normal { background-color: #28a745; }
+    .stock-low { background-color: #ffc107; }
+    .stock-out { background-color: #dc3545; }
+    .movement-form {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4 gradient-header">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white shadow-lg border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-1">⚖️ Ajustement des Stocks</h1>
+                            <p class="mb-0 opacity-75">Créez des mouvements de stock pour ajuster les niveaux</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'catalog:stock_list' %}" class="btn btn-outline-light btn-modern me-2">
+                                <i class="bi bi-arrow-left"></i> Retour aux Stocks
+                            </a>
+                            <a href="{% url 'catalog:stock_movements' %}" class="btn btn-light btn-modern">
+                                <i class="bi bi-clock-history"></i> Historique
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Stock Adjustment Form -->
+            <div class="movement-form">
+                <h4 class="mb-4">Nouveau Mouvement de Stock</h4>
+                
+                <form method="post" id="stockAdjustmentForm">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <!-- Product Selection -->
+                        <div class="col-md-6">
+                            <label for="product" class="form-label">Produit *</label>
+                            <select class="form-select form-control-modern" id="product" name="product" required>
+                                <option value="">Sélectionnez un produit</option>
+                                {% for product in products %}
+                                    <option value="{{ product.id }}" 
+                                            data-current-stock="{{ product.current_stock }}"
+                                            data-min-stock="{{ product.min_stock }}"
+                                            data-max-stock="{{ product.max_stock }}">
+                                        {{ product.name }} 
+                                        {% if product.sku %}({{ product.sku }}){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Movement Type -->
+                        <div class="col-md-6">
+                            <label for="movement_type" class="form-label">Type de Mouvement *</label>
+                            <select class="form-select form-control-modern" id="movement_type" name="movement_type" required>
+                                <option value="">Sélectionnez le type</option>
+                                <option value="in">Entrée de Stock</option>
+                                <option value="out">Sortie de Stock</option>
+                                <option value="adjustment">Ajustement</option>
+                                <option value="transfer">Transfert</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Quantity -->
+                        <div class="col-md-6">
+                            <label for="quantity" class="form-label">Quantité *</label>
+                            <input type="number" class="form-control form-control-modern" id="quantity" name="quantity" 
+                                   min="1" step="1" required>
+                            <div class="form-text">Quantité à ajouter, retirer ou définir</div>
+                        </div>
+                        
+                        <!-- Unit Cost -->
+                        <div class="col-md-6">
+                            <label for="unit_cost" class="form-label">Coût unitaire (MAD)</label>
+                            <input type="number" class="form-control form-control-modern" id="unit_cost" name="unit_cost" 
+                                   min="0" step="0.01">
+                            <div class="form-text">Coût unitaire pour ce mouvement</div>
+                        </div>
+                        
+                        <!-- Reference -->
+                        <div class="col-md-6">
+                            <label for="reference" class="form-label">Référence</label>
+                            <input type="text" class="form-control form-control-modern" id="reference" name="reference" 
+                                   placeholder="Ex: Facture, Bon de livraison, etc.">
+                            <div class="form-text">Référence du document associé</div>
+                        </div>
+                        
+                        <!-- Reference Type -->
+                        <div class="col-md-6">
+                            <label for="reference_type" class="form-label">Type de Référence</label>
+                            <select class="form-select form-control-modern" id="reference_type" name="reference_type">
+                                <option value="">Aucun</option>
+                                <option value="invoice">Facture</option>
+                                <option value="purchase_order">Bon de commande</option>
+                                <option value="delivery_note">Bon de livraison</option>
+                                <option value="adjustment">Ajustement</option>
+                                <option value="transfer">Transfert</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Notes -->
+                        <div class="col-12">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control form-control-modern" id="notes" name="notes" rows="3" 
+                                      placeholder="Commentaires sur ce mouvement de stock..."></textarea>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="col-12">
+                            <hr class="my-4">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg btn-modern">
+                                    <i class="bi bi-check-circle"></i> Créer le Mouvement
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Product Information Panel -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 Informations Produit</h5>
+                </div>
+                <div class="card-body">
+                    <div id="productInfo" class="text-center text-muted py-4">
+                        <i class="bi bi-box-seam display-4"></i>
+                        <p class="mt-3">Sélectionnez un produit pour voir ses informations</p>
+                    </div>
+                    
+                    <div id="productDetails" style="display: none;">
+                        <div class="product-info">
+                            <h6 id="productName" class="mb-3"></h6>
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h6 class="mb-0 text-primary" id="currentStock">-</h6>
+                                        <small class="text-muted">Actuel</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h6 class="mb-0 text-warning" id="minStock">-</h6>
+                                        <small class="text-muted">Minimum</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <h6 class="mb-0 text-success" id="maxStock">-</h6>
+                                    <small class="text-muted">Maximum</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Stock Status -->
+                            <div class="text-center mb-3">
+                                <span id="stockStatus" class="badge"></span>
+                            </div>
+                            
+                            <!-- Stock Progress Bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Stock</small>
+                                    <small id="stockPercentage">-</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="stockProgressBar" class="progress-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Impact Preview -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">📊 Impact du Mouvement</h6>
+                            <div id="impactPreview">
+                                <p class="mb-2">Sélectionnez un type et une quantité pour voir l'impact</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">❓ Types de Mouvements</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Entrée</strong>
+                        <small class="d-block text-muted">Ajoute des produits au stock (réception, retour...)</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Sortie</strong>
+                        <small class="d-block text-muted">Retire des produits du stock (vente, perte...)</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Ajustement</strong>
+                        <small class="d-block text-muted">Définit directement le niveau de stock</small>
+                    </div>
+                    <div>
+                        <strong>Transfert</strong>
+                        <small class="d-block text-muted">Déplace des produits entre emplacements</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('product');
+    const movementTypeSelect = document.getElementById('movement_type');
+    const quantityInput = document.getElementById('quantity');
+    
+    // Show product info when product is selected
+    productSelect.addEventListener('change', function() {
+        if (this.value) {
+            showProductInfo(this);
+        } else {
+            hideProductInfo();
+        }
+    });
+    
+    // Update impact preview when movement type or quantity changes
+    movementTypeSelect.addEventListener('change', updateImpactPreview);
+    quantityInput.addEventListener('input', updateImpactPreview);
+    
+    // Form validation
+    document.getElementById('stockAdjustmentForm').addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+
+function showProductInfo(productSelect) {
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const currentStock = parseInt(selectedOption.dataset.currentStock);
+    const minStock = parseInt(selectedOption.dataset.minStock);
+    const maxStock = parseInt(selectedOption.dataset.maxStock);
+    const productName = selectedOption.text;
+    
+    // Update product details
+    document.getElementById('productName').textContent = productName;
+    document.getElementById('currentStock').textContent = currentStock;
+    document.getElementById('minStock').textContent = minStock;
+    document.getElementById('maxStock').textContent = maxStock;
+    
+    // Calculate stock percentage
+    const stockPercentage = maxStock > 0 ? Math.round((currentStock / maxStock) * 100) : 0;
+    document.getElementById('stockPercentage').textContent = stockPercentage + '%';
+    
+    // Update progress bar
+    const progressBar = document.getElementById('stockProgressBar');
+    progressBar.style.width = stockPercentage + '%';
+    
+    // Update stock status
+    const statusBadge = document.getElementById('stockStatus');
+    if (currentStock === 0) {
+        statusBadge.textContent = 'Rupture de Stock';
+        statusBadge.className = 'badge bg-danger';
+        progressBar.className = 'progress-bar bg-danger';
+    } else if (currentStock <= minStock) {
+        statusBadge.textContent = 'Stock Bas';
+        statusBadge.className = 'badge bg-warning text-dark';
+        progressBar.className = 'progress-bar bg-warning';
+    } else {
+        statusBadge.textContent = 'Stock Normal';
+        statusBadge.className = 'badge bg-success';
+        progressBar.className = 'progress-bar bg-success';
+    }
+    
+    // Show product details
+    document.getElementById('productInfo').style.display = 'none';
+    document.getElementById('productDetails').style.display = 'block';
+    
+    // Update impact preview
+    updateImpactPreview();
+}
+
+function hideProductInfo() {
+    document.getElementById('productInfo').style.display = 'block';
+    document.getElementById('productDetails').style.display = 'none';
+}
+
+function updateImpactPreview() {
+    const productSelect = document.getElementById('product');
+    const movementType = document.getElementById('movement_type').value;
+    const quantity = parseInt(document.getElementById('quantity').value) || 0;
+    
+    if (!productSelect.value || !movementType || quantity === 0) {
+        document.getElementById('impactPreview').innerHTML = 
+            '<p class="mb-2">Sélectionnez un type et une quantité pour voir l\'impact</p>';
+        return;
+    }
+    
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const currentStock = parseInt(selectedOption.dataset.currentStock);
+    let newStock = currentStock;
+    let impactText = '';
+    let impactClass = '';
+    
+    switch (movementType) {
+        case 'in':
+            newStock = currentStock + quantity;
+            impactText = `Stock après: ${newStock} (+${quantity})`;
+            impactClass = 'text-success';
+            break;
+        case 'out':
+            newStock = Math.max(0, currentStock - quantity);
+            impactText = `Stock après: ${newStock} (-${quantity})`;
+            impactClass = 'text-danger';
+            break;
+        case 'adjustment':
+            newStock = quantity;
+            impactText = `Stock défini à: ${newStock}`;
+            impactClass = 'text-info';
+            break;
+        case 'transfer':
+            newStock = currentStock;
+            impactText = `Transfert de ${quantity} unités`;
+            impactClass = 'text-warning';
+            break;
+    }
+    
+    // Determine new status
+    let newStatus = '';
+    if (newStock === 0) {
+        newStatus = 'Rupture de Stock';
+    } else if (newStock <= parseInt(selectedOption.dataset.minStock)) {
+        newStatus = 'Stock Bas';
+    } else {
+        newStatus = 'Stock Normal';
+    }
+    
+    document.getElementById('impactPreview').innerHTML = `
+        <div class="mb-2">
+            <strong>Stock actuel:</strong> ${currentStock}
+        </div>
+        <div class="mb-2">
+            <strong class="${impactClass}">${impactText}</strong>
+        </div>
+        <div class="mb-2">
+            <strong>Nouveau statut:</strong> ${newStatus}
+        </div>
+    `;
+}
+
+function validateForm() {
+    const product = document.getElementById('product').value;
+    const movementType = document.getElementById('movement_type').value;
+    const quantity = document.getElementById('quantity').value;
+    
+    if (!product) {
+        alert('Veuillez sélectionner un produit');
+        return false;
+    }
+    
+    if (!movementType) {
+        alert('Veuillez sélectionner un type de mouvement');
+        return false;
+    }
+    
+    if (!quantity || quantity <= 0) {
+        alert('Veuillez saisir une quantité valide');
+        return false;
+    }
+    
+    // Additional validation for out movements
+    if (movementType === 'out') {
+        const selectedOption = document.getElementById('product').options[document.getElementById('product').selectedIndex];
+        const currentStock = parseInt(selectedOption.dataset.currentStock);
+        if (parseInt(quantity) > currentStock) {
+            if (!confirm(`Attention: Vous essayez de retirer ${quantity} unités alors que le stock actuel est de ${currentStock}. Continuer ?`)) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+</script>
+{% endblock %}

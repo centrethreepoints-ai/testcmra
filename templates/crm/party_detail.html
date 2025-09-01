@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h3 class="mb-1">{{ party.name }}</h3>
+              <div class="text-muted">
+                <span class="me-3"><i class="bi bi-envelope"></i> {{ party.email|default:'—' }}</span>
+                <span class="me-3"><i class="bi bi-telephone"></i> {{ party.phone|default:'—' }}</span>
+                <span class="me-3"><i class="bi bi-phone"></i> {{ party.mobile|default:'—' }}</span>
+              </div>
+            </div>
+            <div class="btn-group">
+              <a href="{% url 'crm:party_edit' party.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Modifier</a>
+              <a href="{% url 'crm:party_delete' party.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
+              <a href="{% url 'crm:party_list' %}" class="btn btn-outline-secondary">Retour</a>
+            </div>
+          </div>
+          <hr>
+          <div class="row g-3">
+            <div class="col-md-3"><small class="text-muted d-block">Type</small><span class="fw-semibold">{% if party.is_customer and party.is_supplier %}Client & Fournisseur{% elif party.is_customer %}Client{% elif party.is_supplier %}Fournisseur{% else %}—{% endif %}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">ICE</small><span class="fw-semibold">{{ party.ice|default:'—' }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">IF</small><span class="fw-semibold">{{ party.if_field|default:'—' }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">RC</small><span class="fw-semibold">{{ party.rc|default:'—' }}</span></div>
+            <div class="col-md-4"><small class="text-muted d-block">Adresse de facturation</small><span class="fw-semibold">{{ party.billing_address|default:'—' }}</span></div>
+            <div class="col-md-4"><small class="text-muted d-block">Adresse de livraison</small><span class="fw-semibold">{{ party.shipping_address|default:'—' }}</span></div>
+            <div class="col-md-2"><small class="text-muted d-block">Ville</small><span class="fw-semibold">{{ party.city|default:'—' }}</span></div>
+            <div class="col-md-2"><small class="text-muted d-block">Code postal</small><span class="fw-semibold">{{ party.postal_code|default:'—' }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">Pays</small><span class="fw-semibold">{{ party.country|default:'—' }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">Conditions de paiement (jours)</small><span class="fw-semibold">{{ party.payment_terms }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">Limite de crédit</small><span class="fw-semibold">{{ party.credit_limit|floatformat:2 }} MAD</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">Statut</small><span class="fw-semibold">{% if party.is_active %}Actif{% else %}Inactif{% endif %}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Résumé financier -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body text-center">
+          <div class="text-xs text-primary text-uppercase mb-1">Solde</div>
+          <div class="h5 mb-0 fw-bold">{{ balance|floatformat:2 }} MAD</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body text-center">
+          <div class="text-xs text-warning text-uppercase mb-1">Retard</div>
+          <div class="h5 mb-0 fw-bold">{{ overdue_amount|floatformat:2 }} MAD</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body text-center">
+          <div class="text-xs text-success text-uppercase mb-1">Factures</div>
+          <div class="h5 mb-0 fw-bold">{{ invoices|length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body text-center">
+          <div class="text-xs text-info text-uppercase mb-1">Paiements</div>
+          <div class="h5 mb-0 fw-bold">{{ payments|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Contacts -->
+    <div class="col-lg-4 mb-4">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-people"></i> Contacts</strong>
+        </div>
+        <div class="card-body">
+          {% if primary_contact %}
+            <div class="mb-3">
+              <small class="text-muted d-block">Contact principal</small>
+              <div class="fw-semibold">{{ primary_contact.get_full_name }}</div>
+              <div class="text-muted small">{{ primary_contact.email|default:'—' }} • {{ primary_contact.phone|default:'—' }}</div>
+            </div>
+            <hr>
+          {% endif %}
+          {% for c in contacts %}
+          <div class="mb-3">
+            <div class="fw-semibold">{{ c.get_full_name }}</div>
+            <div class="text-muted small">{{ c.email|default:'—' }} • {{ c.phone|default:'—' }}</div>
+          </div>
+          {% empty %}
+          <div class="text-muted">Aucun contact</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents récents -->
+    <div class="col-lg-8 mb-4">
+      <div class="card h-100">
+        <div class="card-header"><strong><i class="bi bi-files"></i> Documents récents</strong></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Devis</h6>
+              <ul class="list-unstyled">
+                {% for d in quotes %}
+                <li class="mb-1"><a href="{% url 'billing:quote_detail' d.id %}">{{ d.number }}</a> • {{ d.issue_date|date:'d/m/Y' }} • {{ d.total_ttc|floatformat:2 }} MAD</li>
+                {% empty %}<li class="text-muted">—</li>{% endfor %}
+              </ul>
+              <h6>Bons de commande</h6>
+              <ul class="list-unstyled">
+                {% for d in purchase_orders %}
+                <li class="mb-1"><a href="{% url 'billing:purchase_order_detail' d.id %}">{{ d.number }}</a> • {{ d.issue_date|date:'d/m/Y' }} • {{ d.total_ttc|floatformat:2 }} MAD</li>
+                {% empty %}<li class="text-muted">—</li>{% endfor %}
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>Factures</h6>
+              <ul class="list-unstyled">
+                {% for d in invoices %}
+                <li class="mb-1"><a href="{% url 'billing:invoice_detail' d.id %}">{{ d.number }}</a> • {{ d.issue_date|date:'d/m/Y' }} • {{ d.total_ttc|floatformat:2 }} MAD</li>
+                {% empty %}<li class="text-muted">—</li>{% endfor %}
+              </ul>
+              <h6>Paiements</h6>
+              <ul class="list-unstyled">
+                {% for p in payments %}
+                <li class="mb-1">{{ p.date|date:'d/m/Y' }} • {{ p.amount|floatformat:2 }} MAD • {{ p.method }}</li>
+                {% empty %}<li class="text-muted">—</li>{% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

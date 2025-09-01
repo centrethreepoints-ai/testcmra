@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Mon profil - CRM Maroc{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-person-circle"></i> Mon profil
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear"></i> Informations personnelles
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Veuillez corriger les erreurs ci-dessous.
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.first_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.last_name|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.phone|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.role|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Société</label>
+                                <input type="text" class="form-control" value="{{ user.company.name|default:'Aucune' }}" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end mt-3">
+                            <a href="{% url 'users:change_password' %}" class="btn btn-warning me-2">
+                                <i class="bi bi-key"></i> Changer le mot de passe
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informations système
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Dernière connexion :</strong><br>
+                        <small class="text-muted">
+                            {{ user.last_login|default:"Jamais"|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Membre depuis :</strong><br>
+                        <small class="text-muted">
+                            {{ user.date_joined|date:"d/m/Y" }}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Statut :</strong><br>
+                        {% if user.is_active %}
+                            <span class="badge bg-success">Actif</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactif</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>MFA :</strong><br>
+                        {% if user.mfa_enabled %}
+                            <span class="badge bg-info">Activé</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Désactivé</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

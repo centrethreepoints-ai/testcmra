@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes tickets{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Mes tickets</h3>
+    <a href="{% url 'helpdesk:ticket_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Nouveau ticket</a>
+  </div>
+  <div class="card shadow">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Numéro</th>
+              <th>Titre</th>
+              <th>Statut</th>
+              <th>Priorité</th>
+              <th>Attribué à</th>
+              <th>Échéance</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tickets %}
+            <tr>
+              <td>{{ t.number }}</td>
+              <td>{{ t.title }}</td>
+              <td><span class="badge bg-secondary">{{ t.get_status_display }}</span></td>
+              <td><span class="badge bg-info text-dark">{{ t.get_priority_display }}</span></td>
+              <td>{{ t.assignee.get_full_name|default:'-' }}</td>
+              <td>{% if t.due_at %}{{ t.due_at|date:'d/m/Y H:i' }}{% else %}-{% endif %}</td>
+              <td class="text-end">
+                <a href="{% url 'helpdesk:ticket_detail' t.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted">Aucun ticket</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Catégories - Catalogue{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0"><i class="bi bi-tags me-2"></i>Catégories</h2>
+    <div>
+      <a href="{% url 'catalog:category_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Nouvelle catégorie
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-primary">Catégories</h6>
+    </div>
+    <div class="card-body">
+      <style>
+        .tree ul { list-style: none; padding-left: 1rem; border-left: 1px dashed #ccc; }
+        .tree li { margin: .25rem 0; position: relative; }
+        .tree li::before { content: ""; position: absolute; left: -1rem; top: .9rem; width: 1rem; height: 0; border-top: 1px dashed #ccc; }
+        .tree .node { display: inline-flex; align-items: center; gap: .5rem; }
+        .tree .badge { font-size: .75rem; }
+      </style>
+      <div class="tree">
+        {% if roots %}
+          <ul>
+            {% for r in roots %}
+              <li>
+                <div class="node">
+                  <i class="bi bi-folder2-open text-warning"></i>
+                  <strong>{{ r.name }}</strong>
+                  <span class="text-muted">{{ r.description|default:'—' }}</span>
+                  <a href="{% url 'catalog:category_edit' r.id %}" class="btn btn-xs btn-outline-primary py-0 px-1"><i class="bi bi-pencil"></i></a>
+                </div>
+                {% with kids=r.tree_children %}
+                  {% if kids %}
+                    <ul>
+                      {% for c1 in kids %}
+                        <li>
+                          <div class="node">
+                            <i class="bi bi-diagram-3 text-secondary"></i>
+                            <span>{{ c1.name }}</span>
+                            <span class="text-muted">{{ c1.description|default:'—' }}</span>
+                            <a href="{% url 'catalog:category_edit' c1.id %}" class="btn btn-xs btn-outline-primary py-0 px-1"><i class="bi bi-pencil"></i></a>
+                          </div>
+                          {% with kids2=c1.tree_children %}
+                            {% if kids2 %}
+                              <ul>
+                                {% for c2 in kids2 %}
+                                  <li>
+                                    <div class="node">
+                                      <i class="bi bi-diagram-3 text-secondary"></i>
+                                      <span>{{ c2.name }}</span>
+                                      <span class="text-muted">{{ c2.description|default:'—' }}</span>
+                                      <a href="{% url 'catalog:category_edit' c2.id %}" class="btn btn-xs btn-outline-primary py-0 px-1"><i class="bi bi-pencil"></i></a>
+                                    </div>
+                                    {% with kids3=c2.tree_children %}
+                                      {% if kids3 %}
+                                        <ul>
+                                          {% for c3 in kids3 %}
+                                            <li>
+                                              <div class="node">
+                                                <i class="bi bi-diagram-3 text-secondary"></i>
+                                                <span>{{ c3.name }}</span>
+                                                <span class="text-muted">{{ c3.description|default:'—' }}</span>
+                                                <a href="{% url 'catalog:category_edit' c3.id %}" class="btn btn-xs btn-outline-primary py-0 px-1"><i class="bi bi-pencil"></i></a>
+                                              </div>
+                                            </li>
+                                          {% endfor %}
+                                        </ul>
+                                      {% endif %}
+                                    {% endwith %}
+                                  </li>
+                                {% endfor %}
+                              </ul>
+                            {% endif %}
+                          {% endwith %}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                {% endwith %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-center text-muted py-3">Aucune catégorie</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

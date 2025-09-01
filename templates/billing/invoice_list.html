@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h3 class="mb-0">Factures</h3>
+    <a href="{% url 'billing:invoice_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Nouvelle facture</a>
+  </div>
+
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+      <a class="nav-link {% if not filter_type %}active{% endif %}" href="?{% if party_selected %}party={{ party_selected }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}{% if status_selected %}status={{ status_selected }}&{% endif %}">Toutes <span class="badge bg-secondary">{{ counts.all }}</span></a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_type == 'sale' %}active{% endif %}" href="?type=sale{% if party_selected %}&party={{ party_selected }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if status_selected %}&status={{ status_selected }}{% endif %}">Factures vente <span class="badge bg-secondary">{{ counts.sale }}</span></a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_type == 'purchase' %}active{% endif %}" href="?type=purchase{% if party_selected %}&party={{ party_selected }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if status_selected %}&status={{ status_selected }}{% endif %}">Factures achat <span class="badge bg-secondary">{{ counts.purchase }}</span></a>
+    </li>
+  </ul>
+
+  <form method="get" class="row g-2 mb-3">
+    {% if filter_type %}<input type="hidden" name="type" value="{{ filter_type }}">{% endif %}
+    <div class="col-md-4">
+      <select name="party" class="form-select">
+        <option value="">-- Toutes les parties --</option>
+        {% for p in parties %}
+          <option value="{{ p.id }}" {% if party_selected == p.id|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <div class="input-group">
+        <span class="input-group-text">Du</span>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control" placeholder="Du">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="input-group">
+        <span class="input-group-text">Au</span>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control" placeholder="Au">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <select name="status" class="form-select">
+        <option value="">-- Statut --</option>
+        <option value="unpaid" {% if status_selected == 'unpaid' %}selected{% endif %}>Impayées</option>
+        <option value="draft" {% if status_selected == 'draft' %}selected{% endif %}>Brouillon</option>
+        <option value="sent" {% if status_selected == 'sent' %}selected{% endif %}>Envoyée</option>
+        <option value="approved" {% if status_selected == 'approved' %}selected{% endif %}>Approuvée</option>
+        <option value="validated" {% if status_selected == 'validated' %}selected{% endif %}>Validée</option>
+        <option value="partial" {% if status_selected == 'partial' %}selected{% endif %}>Partiellement payée</option>
+        <option value="paid" {% if status_selected == 'paid' %}selected{% endif %}>Payée</option>
+        <option value="cancelled" {% if status_selected == 'cancelled' %}selected{% endif %}>Annulée</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrer</button>
+    </div>
+  </form>
+
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>Numéro</th>
+        <th>{% if filter_type == 'purchase' %}Fournisseur{% else %}Client{% endif %}</th>
+        <th>Type</th>
+        <th>Statut</th>
+        <th>Date</th>
+        <th class="text-end">Total TTC</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inv in invoices %}
+      <tr>
+        <td><a href="{% url 'billing:invoice_detail' inv.pk %}">{{ inv.number }}</a></td>
+        <td>{{ inv.party.name }}</td>
+        <td>
+          {% if inv.invoice_type == 'sale' %}<span class="badge bg-info">Vente</span>{% else %}<span class="badge bg-warning text-dark">Achat</span>{% endif %}
+        </td>
+        <td>
+          {% if inv.status == 'draft' %}<span class="badge bg-secondary">Brouillon</span>
+          {% elif inv.status == 'sent' %}<span class="badge bg-info text-dark">Envoyée</span>
+          {% elif inv.status == 'validated' %}<span class="badge bg-warning text-dark">Confirmée</span>
+          {% elif inv.status == 'partial' %}<span class="badge bg-primary">Partielle</span>
+          {% elif inv.status == 'paid' %}<span class="badge bg-success">Payée</span>
+          {% else %}<span class="badge bg-light text-dark">{{ inv.status }}</span>{% endif %}
+        </td>
+        <td>{{ inv.issue_date }}</td>
+        <td class="text-end"><span class="js-total-ttc" data-amount="{{ inv.total_ttc }}">{{ inv.total_ttc|floatformat:2 }}</span></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center text-muted">Aucune facture</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="4" class="text-end">Total filtré</th>
+        <th class="text-end"><span id="js-filtered-total">{{ total_sum|floatformat:2 }}</span></th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function computeFilteredTotal() {
+    const amounts = document.querySelectorAll('tbody .js-total-ttc');
+    let total = 0;
+    amounts.forEach(el => {
+      const val = parseFloat(el.getAttribute('data-amount'));
+      if (!isNaN(val)) total += val;
+    });
+    const out = document.getElementById('js-filtered-total');
+    if (out) out.textContent = total.toFixed(2);
+  }
+  computeFilteredTotal();
+});
+</script>
+{% endblock %}

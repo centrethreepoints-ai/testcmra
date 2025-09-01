@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if mode == 'edit' %}Modifier société{% else %}Nouvelle société{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% if mode == 'edit' %}<i class="bi bi-building"></i> Modifier société{% else %}<i class="bi bi-building-add"></i> Nouvelle société{% endif %}</h5>
+          <a href="{% url 'companies:company_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour</a>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label">Nom</label>
+                <input class="form-control" type="text" name="name" value="{{ company.name|default:'' }}" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Devise</label>
+                <select class="form-select" name="default_currency">
+                  <option value="MAD" {% if company.default_currency == 'MAD' or not company.default_currency %}selected{% endif %}>MAD</option>
+                  <!-- EUR removed as project uses MAD only by default -->
+                  <option value="USD" {% if company.default_currency == 'USD' %}selected{% endif %}>USD</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" name="email" value="{{ company.email|default:'' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Téléphone</label>
+                <input class="form-control" type="text" name="phone" value="{{ company.phone|default:'' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Ville</label>
+                <input class="form-control" type="text" name="city" value="{{ company.city|default:'' }}">
+              </div>
+              <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if company.is_active|default_if_none:True %}checked{% endif %}>
+                  <label class="form-check-label" for="is_active">Active</label>
+                </div>
+              </div>
+            </div>
+            <hr class="my-4">
+            <h6 class="mb-3">Fonctionnalités (activer/désactiver)</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="feature_emails_enabled" id="feature_emails_enabled" {% if flags.feature_emails_enabled %}checked{% endif %}>
+                  <label class="form-check-label" for="feature_emails_enabled">Envoi d'emails (devis/BC/factures)</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="feature_approvals_enabled" id="feature_approvals_enabled" {% if flags.feature_approvals_enabled %}checked{% endif %}>
+                  <label class="form-check-label" for="feature_approvals_enabled">Approbations (workflows)</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="feature_po_reception_enabled" id="feature_po_reception_enabled" {% if flags.feature_po_reception_enabled %}checked{% endif %}>
+                  <label class="form-check-label" for="feature_po_reception_enabled">Réception BC séparée (entrées de stock)</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="feature_stock_avg_cost_enabled" id="feature_stock_avg_cost_enabled" {% if flags.feature_stock_avg_cost_enabled %}checked{% endif %}>
+                  <label class="form-check-label" for="feature_stock_avg_cost_enabled">Valorisation coût moyen</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="feature_payments_advanced_enabled" id="feature_payments_advanced_enabled" {% if flags.feature_payments_advanced_enabled %}checked{% endif %}>
+                  <label class="form-check-label" for="feature_payments_advanced_enabled">Paiements avancés (allocations multi-factures)</label>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 d-flex justify-content-end gap-2">
+              <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Enregistrer</button>
+              <a class="btn btn-outline-secondary" href="{% url 'companies:company_list' %}">Annuler</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

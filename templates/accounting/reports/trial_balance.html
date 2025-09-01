@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="container py-4">
+  <h3>Balance (Trial Balance)</h3>
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>Compte</th>
+        <th class="text-end">Débit</th>
+        <th class="text-end">Crédit</th>
+        <th class="text-end">Solde</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.account.code }} - {{ r.account.name }}</td>
+        <td class="text-end">{{ r.debit|floatformat:2|intcomma }}</td>
+        <td class="text-end">{{ r.credit|floatformat:2|intcomma }}</td>
+        <td class="text-end">{{ r.balance|floatformat:2|intcomma }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+

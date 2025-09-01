@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Créer / Modifier un produit</h3>
+    <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour à la liste
+    </a>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Informations de base -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-box-seam"></i> Informations de base</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Code</label>
+            {{ form.sku|add_class:'form-control' }}
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Nom</label>
+            {{ form.name|add_class:'form-control' }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            {{ form.description|add_class:'form-control' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarification & TVA -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-cash-coin"></i> Tarification & TVA</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Type</label>
+            {{ form.product_type|add_class:'form-select' }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Prix HT</label>
+            {{ form.price_ht|add_class:'form-control' }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">TVA</label>
+            {{ form.tax_rate|add_class:'form-select' }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Code-barres</label>
+            {{ form.barcode|add_class:'form-control' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock (optionnel) -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-diagram-3"></i> Stock</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <div class="form-check">
+              {{ form.has_stock|add_class:'form-check-input' }}
+              <label class="form-check-label">Activer la gestion de stock</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Quantité</label>
+            {{ form.current_stock|add_class:'form-control' }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Stock minimum</label>
+            {{ form.min_stock|add_class:'form-control' }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Catégorie</label>
+            {{ form.category|add_class:'form-select' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statut -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-toggle-on"></i> Statut</strong>
+      </div>
+      <div class="card-body">
+        <div class="form-check">
+          {{ form.is_active|add_class:'form-check-input' }}
+          <label class="form-check-label">Produit actif</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <a href="{% url 'catalog:product_list' %}" class="btn btn-light">Annuler</a>
+      <button type="submit" class="btn btn-warning">
+        <i class="bi bi-save"></i> Enregistrer
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

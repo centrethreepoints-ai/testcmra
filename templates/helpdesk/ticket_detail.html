@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Ticket {{ ticket.number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">{{ ticket.number }} - {{ ticket.title }}</h5>
+      <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <p class="text-muted">{{ ticket.description|linebreaks }}</p>
+        </div>
+        <div class="col-md-4">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item"><strong>Priorité:</strong> {{ ticket.get_priority_display }}</li>
+            <li class="list-group-item"><strong>SLA:</strong> {{ ticket.sla.name|default:'-' }}</li>
+            <li class="list-group-item"><strong>Attribué à:</strong> {{ ticket.assignee.get_full_name|default:'-' }}</li>
+            <li class="list-group-item"><strong>Échéance:</strong> {% if ticket.due_at %}{{ ticket.due_at|date:'d/m/Y H:i' }}{% else %}-{% endif %}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow">
+    <div class="card-header"><strong>Commentaires</strong></div>
+    <div class="card-body">
+      <ul class="list-unstyled">
+        {% for c in ticket.comments.all %}
+        <li class="mb-3">
+          <div class="small text-muted">{{ c.author.get_full_name|default:c.author.email }} — {{ c.created_at|date:'d/m/Y H:i' }}</div>
+          <div>{{ c.message|linebreaks }}</div>
+        </li>
+        {% empty %}
+        <li class="text-muted">Aucun commentaire.</li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{% url 'helpdesk:ticket_comment' ticket.pk %}">
+        {% csrf_token %}
+        <div class="input-group">
+          <textarea class="form-control" name="message" rows="2" placeholder="Ajouter un commentaire..."></textarea>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

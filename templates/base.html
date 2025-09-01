@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CRM Maroc{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-y: auto;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #667eea !important;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-radius: 0.75rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 0.5rem;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        /* Top center navbar pills for billing/accounting */
+        .top-nav-pills .nav-link {
+            border-radius: 9999px;
+            padding: 0.5rem 0.9rem;
+            margin: 0 0.25rem;
+            font-weight: 600;
+            color: #5a5c69;
+            background: #f3f4f8;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid #e6e8ef;
+        }
+        .top-nav-pills .nav-link i { margin-right: 0.35rem; }
+        .top-nav-pills .nav-link:hover { background: #e9ecf5; color: #3b3d4d; }
+        .top-nav-pills .nav-link.active {
+            color: #fff !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 6px 18px rgba(102, 126, 234, 0.25);
+            border-color: transparent;
+        }
+        /* Allow settings pills to wrap on small widths */
+        .top-nav-pills { flex-wrap: wrap; row-gap: 0.25rem; }
+    </style>
+</head>
+<body>
+    <!-- Navigation principale -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'core:dashboard' %}">
+                {% if current_company and current_company.logo %}
+                    <img src="{{ current_company.logo.url }}" alt="Logo" style="height:28px; width:auto; border-radius:4px;">
+                {% else %}
+                    <i class="bi bi-building"></i>
+                {% endif %}
+                <span>{{ current_company.name|default:"CRM Maroc" }}</span>
+            </a>
+            {% if user.is_authenticated %}
+            <div class="dropdown ms-2">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Changer de société
+                </button>
+                <ul class="dropdown-menu">
+                    {% if user.company %}
+                    <li>
+                        <a class="dropdown-item" href="{% url 'companies:switch_company' user.company.id %}">
+                            {{ user.company.name }}{% if current_company and current_company.id == user.company.id %} ✓{% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for cmp in user.companies.all %}
+                    <li>
+                        <a class="dropdown-item" href="{% url 'companies:switch_company' cmp.id %}">
+                            {{ cmp.name }}{% if current_company and current_company.id == cmp.id %} ✓{% endif %}
+                        </a>
+                    </li>
+                    {% empty %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Liens de section au centre -->
+                {% if request.resolver_match.app_name == 'billing' %}
+                <ul class="navbar-nav mx-auto top-nav-pills">
+                    <li class="nav-item"><a class="nav-link {% if 'quote' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'billing:quote_list' %}"><i class="bi bi-file-earmark-text"></i> Devis</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'purchase_order' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'billing:purchase_order_list' %}"><i class="bi bi-clipboard-check"></i> Bons de commande</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'invoice' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'billing:invoice_list' %}"><i class="bi bi-receipt"></i> Factures</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'credit_note' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'billing:credit_note_list' %}"><i class="bi bi-arrow-counterclockwise"></i> Avoirs</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'billing:payment_list' %}"><i class="bi bi-cash-coin"></i> Paiements</a></li>
+                </ul>
+                {% elif request.resolver_match.app_name == 'accounting' %}
+                <ul class="navbar-nav mx-auto top-nav-pills">
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'move_list' %}active{% endif %}" href="{% url 'accounting:move_list' %}"><i class="bi bi-journal-text"></i> Écritures</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'journal_list' %}active{% endif %}" href="{% url 'accounting:journal_list' %}"><i class="bi bi-journals"></i> Journaux</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'account_list' %}active{% endif %}" href="{% url 'accounting:account_list' %}"><i class="bi bi-collection"></i> PCM</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'trial_balance' %}active{% endif %}" href="{% url 'accounting:trial_balance' %}"><i class="bi bi-table"></i> Balance</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'general_ledger' %}active{% endif %}" href="{% url 'accounting:general_ledger' %}"><i class="bi bi-list-columns"></i> Grand livre</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'vat_return' %}active{% endif %}" href="{% url 'accounting:vat_return' %}"><i class="bi bi-percent"></i> TVA</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'ar_ap' %}active{% endif %}" href="{% url 'accounting:ar_ap' %}"><i class="bi bi-people-fill"></i> AR/AP</a></li>
+                </ul>
+                {% elif request.resolver_match.app_name == 'catalog' %}
+                {% with urlname=request.resolver_match.url_name %}
+                <ul class="navbar-nav mx-auto top-nav-pills">
+                    {% if 'stock' in urlname or 'inventory' in urlname %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if urlname == 'stock_list' %}active{% endif %}" href="{% url 'catalog:stock_list' %}">
+                                <i class="bi bi-box-seam"></i> Stocks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if urlname == 'stock_movements' %}active{% endif %}" href="{% url 'catalog:stock_movements' %}">
+                                <i class="bi bi-clock-history"></i> Mouvements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if urlname == 'low_stock_alerts' %}active{% endif %}" href="{% url 'catalog:low_stock_alerts' %}">
+                                <i class="bi bi-exclamation-triangle"></i> Alertes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if urlname == 'stock_adjustment' %}active{% endif %}" href="{% url 'catalog:stock_adjustment' %}">
+                                <i class="bi bi-sliders"></i> Ajustement
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'inventory' in urlname %}active{% endif %}" href="{% url 'catalog:inventory_list' %}">
+                                <i class="bi bi-clipboard-data"></i> Inventaire
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if urlname == 'product_list' %}active{% endif %}" href="{% url 'catalog:product_list' %}">
+                                <i class="bi bi-box"></i> Produits
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if urlname == 'category_list' %}active{% endif %}" href="{% url 'catalog:category_list' %}">
+                                <i class="bi bi-tags"></i> Catégories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if urlname == 'tax_rate_list' %}active{% endif %}" href="{% url 'catalog:tax_rate_list' %}">
+                                <i class="bi bi-percent"></i> Taux de TVA
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                {% endwith %}
+                {% elif request.resolver_match.app_name == 'settingsapp' or request.resolver_match.app_name == 'users' or request.resolver_match.app_name == 'companies' %}
+                <ul class="navbar-nav mx-auto top-nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'settingsapp' and request.resolver_match.url_name == 'company_settings' %}active{% endif %}" href="{% url 'settingsapp:company_settings' %}">
+                            <i class="bi bi-building"></i> Entreprise
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'companies' %}active{% endif %}" href="{% url 'companies:company_list' %}">
+                            <i class="bi bi-buildings"></i> Sociétés
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'users' %}active{% endif %}" href="{% url 'users:user_list' %}">
+                            <i class="bi bi-people"></i> Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'workflow' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'core:workflow_list' %}">
+                            <i class="bi bi-diagram-3"></i> Workflows
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'approval' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'core:approval_request_list' %}">
+                            <i class="bi bi-list-check"></i> Approbations
+                        </a>
+                    </li>
+                </ul>
+                {% elif request.resolver_match.app_name == 'core' and 'workflow' in request.resolver_match.url_name %}
+                <ul class="navbar-nav mx-auto top-nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'settingsapp:company_settings' %}">
+                            <i class="bi bi-building"></i> Entreprise
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'companies:company_list' %}">
+                            <i class="bi bi-buildings"></i> Sociétés
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'users:user_list' %}">
+                            <i class="bi bi-people"></i> Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'core:workflow_list' %}">
+                            <i class="bi bi-diagram-3"></i> Workflows
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:approval_request_list' %}">
+                            <i class="bi bi-list-check"></i> Approbations
+                        </a>
+                    </li>
+                </ul>
+                {% elif request.resolver_match.app_name == 'core' and 'approval' in request.resolver_match.url_name %}
+                <ul class="navbar-nav mx-auto top-nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'settingsapp:company_settings' %}">
+                            <i class="bi bi-building"></i> Entreprise
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'companies:company_list' %}">
+                            <i class="bi bi-buildings"></i> Sociétés
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'users:user_list' %}">
+                            <i class="bi bi-people"></i> Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:workflow_list' %}">
+                            <i class="bi bi-diagram-3"></i> Workflows
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'core:approval_request_list' %}">
+                            <i class="bi bi-list-check"></i> Approbations
+                        </a>
+                    </li>
+                </ul>
+                {% else %}
+                <ul class="navbar-nav mx-auto"></ul>
+                {% endif %}
+                
+                <!-- Menu utilisateur à droite -->
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> {{ user.get_full_name|default:user.email }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'users:profile' %}">
+                                    <i class="bi bi-person"></i> Profil
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:change_password' %}">
+                                    <i class="bi bi-key"></i> Changer mot de passe
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'users:logout' %}">
+                                    <i class="bi bi-box-arrow-right"></i> Déconnexion
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:login' %}">
+                                <i class="bi bi-box-arrow-in-right"></i> Connexion
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Supprime la sous-barre contextuelle précédente -->
+    
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated %}
+                <!-- Sidebar -->
+                <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'core' %}active{% endif %}" href="{% url 'core:dashboard' %}">
+                                    <i class="bi bi-speedometer2"></i> Tableau de bord
+                                </a>
+                            </li>
+                            
+                            
+                            
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'crm' %}active{% endif %}" href="{% url 'crm:party_list' %}">
+                                    <i class="bi bi-people"></i> CRM
+                                </a>
+                            </li>
+                            
+                            {% if not user.is_authenticated or not user.role == 'comptable' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'catalog' %}active{% endif %}" href="{% url 'catalog:product_list' %}">
+                                    <i class="bi bi-box"></i> Catalogue
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% if not user.is_authenticated or not user.role == 'comptable' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'stock' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'catalog:stock_list' %}">
+                                    <i class="bi bi-box-seam"></i> Gestion des Stocks
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            <li class="nav-item mt-2">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'billing' %}active{% endif %}" href="{% url 'billing:quote_list' %}">
+                                    <i class="bi bi-file-earmark-text"></i> Facturation
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item mt-2">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'accounting' %}active{% endif %}" href="{% url 'accounting:move_list' %}">
+                                    <i class="bi bi-journal-text"></i> Comptabilité
+                                </a>
+                            </li>
+
+                            <li class="nav-item mt-2">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'helpdesk' %}active{% endif %}" href="{% url 'helpdesk:ticket_list' %}">
+                                    <i class="bi bi-life-preserver"></i> Helpdesk
+                                </a>
+                            </li>
+                            
+
+                            
+                            {% if user.role == 'admin' %}
+                            <li class="nav-item mt-2">
+                                <a class="nav-link {% if request.resolver_match.app_name == 'settingsapp' %}active{% endif %}" href="{% url 'settingsapp:company_settings' %}">
+                                    <i class="bi bi-gear"></i> Paramètres
+                                </a>
+                            </li>
+                            
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
+                
+                <!-- Contenu principal -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            {% else %}
+                <!-- Contenu pour utilisateurs non connectés -->
+                <main class="col-12">
+            {% endif %}
+                
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mt-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Contenu de la page -->
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Scripts personnalisés -->
+    <script>
+        // HTMX configuration
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+        
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

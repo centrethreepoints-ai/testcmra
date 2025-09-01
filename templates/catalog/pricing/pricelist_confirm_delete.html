@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer la liste de prix{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow">
+        <div class="card-header">
+          <h5 class="mb-0">Confirmer la suppression</h5>
+        </div>
+        <div class="card-body">
+          <p>Voulez-vous vraiment supprimer la liste de prix <strong>{{ object.name }}</strong> ?</p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-end gap-2 mt-3">
+              <a class="btn btn-outline-secondary" href="{% url 'catalog:pricelist_list' %}">Annuler</a>
+              <button class="btn btn-danger" type="submit"><i class="bi bi-trash"></i> Supprimer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+ </div>
+{% endblock %}
+
+

@@ -1,0 +1,26 @@
+<div class="row">
+  <div class="col-md-6">
+    <p><strong>Date:</strong> {{ movement.created_at|date:"d/m/Y H:i" }}</p>
+    <p><strong>Produit:</strong> {{ movement.product.name }}</p>
+    {% if movement.product.category %}
+    <p><strong>Catégorie:</strong> {{ movement.product.category.name }}</p>
+    {% endif %}
+    <p><strong>Type:</strong> {{ movement.get_movement_type_display }}</p>
+    <p><strong>Quantité:</strong> {{ movement.quantity }}</p>
+  </div>
+  <div class="col-md-6">
+    <p><strong>Coût unitaire:</strong> {{ movement.unit_cost|floatformat:2 }} MAD</p>
+    <p><strong>Stock avant:</strong> {{ movement.stock_before }}</p>
+    <p><strong>Stock après:</strong> {{ movement.stock_after }}</p>
+    {% if movement.reference %}
+    <p><strong>Référence:</strong> {{ movement.reference }} {% if movement.reference_type %}<span class="badge bg-info">{{ movement.reference_type }}</span>{% endif %}</p>
+    {% endif %}
+    <p><strong>Utilisateur:</strong> {{ movement.created_by.get_full_name|default:movement.created_by.username }}</p>
+    {% if movement.notes %}
+    <p><strong>Notes:</strong> {{ movement.notes }}</p>
+    {% endif %}
+  </div>
+</div>
+
+
+

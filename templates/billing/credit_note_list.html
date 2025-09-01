@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h3 class="mb-0">Avoirs</h3>
+    <a href="{% url 'billing:credit_note_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Nouvel avoir</a>
+  </div>
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>Numéro</th>
+        <th>Partie</th>
+        <th>Date</th>
+        <th>Total TTC</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cn in credit_notes %}
+      <tr>
+        <td>{{ cn.number }}</td>
+        <td>{{ cn.party.name }}</td>
+        <td>{{ cn.issue_date }}</td>
+        <td class="text-end">{{ cn.total_ttc }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center text-muted">Aucun avoir</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+

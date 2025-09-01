@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Grand Livre</h3>
+  <div class="list-group">
+    {% for acc in accounts %}
+      <a class="list-group-item list-group-item-action" href="#">{{ acc.code }} - {{ acc.name }}</a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

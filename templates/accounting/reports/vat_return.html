@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="container py-4">
+  <h3>Déclaration TVA</h3>
+  {% if period %}
+    <p>Période: {{ period.period_start }} → {{ period.period_end }}</p>
+    <ul class="list-group">
+      <li class="list-group-item d-flex justify-content-between"><span>TVA collectée</span><strong>{{ period.vat_collected|floatformat:2|intcomma }}</strong></li>
+      <li class="list-group-item d-flex justify-content-between"><span>TVA déductible</span><strong>{{ period.vat_deductible|floatformat:2|intcomma }}</strong></li>
+      <li class="list-group-item d-flex justify-content-between"><span>TVA à payer</span><strong>{{ period.vat_due|floatformat:2|intcomma }}</strong></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Crédit de TVA</span><strong>{{ period.vat_credit|floatformat:2|intcomma }}</strong></li>
+    </ul>
+  {% else %}
+    <div class="alert alert-info">Aucune période TVA disponible.</div>
+  {% endif %}
+</div>
+{% endblock %}
+

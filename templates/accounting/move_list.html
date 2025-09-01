@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header Section -->
+  <div class="row mb-4 gradient-header">
+    <div class="col-12">
+      <div class="card bg-gradient-primary text-white shadow-lg border-0">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 class="h3 mb-1"><i class="bi bi-journal-text me-2"></i>Mouvements comptables</h2>
+              <p class="mb-0 opacity-75">Dernières écritures par journal et référence</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-header h1, .gradient-header h2, .gradient-header p { color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+  </style>
+
+  <!-- Table -->
+  <div class="card shadow">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-list-ul me-2"></i>Liste des mouvements</h6>
+    </div>
+    <div class="card-body">
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Journal</th>
+        <th>Référence</th>
+        <th>Total débit</th>
+        <th>Total crédit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for move in moves %}
+      <tr>
+        <td>{{ move.date }}</td>
+        <td>{{ move.journal.code }}</td>
+        <td>{{ move.ref }}</td>
+        <td class="text-end">{{ move.total_debit }}</td>
+        <td class="text-end">{{ move.total_credit }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="text-center text-muted">Aucun mouvement trouvé.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

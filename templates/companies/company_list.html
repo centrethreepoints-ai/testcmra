@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Sociétés{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Sociétés</h3>
+    <a href="{% url 'companies:company_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Nouvelle société</a>
+  </div>
+  <div class="card shadow">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Ville</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Devise</th>
+              <th>Active</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in companies %}
+            <tr>
+              <td>{{ c.name }}</td>
+              <td>{{ c.city|default:'-' }}</td>
+              <td>{{ c.email|default:'-' }}</td>
+              <td>{{ c.phone|default:'-' }}</td>
+              <td>{{ c.default_currency }}</td>
+              <td>{% if c.is_active %}<span class="badge bg-success">Oui</span>{% else %}<span class="badge bg-secondary">Non</span>{% endif %}</td>
+              <td class="text-end">
+                <a href="{% url 'companies:company_edit' c.pk %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted">Aucune société</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

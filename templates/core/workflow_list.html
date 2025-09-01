@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Workflows d'Approbation{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-header h1, .gradient-header p {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+    .workflow-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+        position: relative;
+    }
+    .workflow-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    }
+    .workflow-card.inactive {
+        opacity: 0.8;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    .workflow-card.active {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        border-left: 5px solid #007bff;
+    }
+    .workflow-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .workflow-card:hover::before {
+        opacity: 1;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filter-section {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+        border: 1px solid #e3f2fd;
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 28px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+    .stats-card:nth-child(2) {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        box-shadow: 0 8px 32px rgba(40, 167, 69, 0.3);
+    }
+    .stats-card:nth-child(3) {
+        background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+        box-shadow: 0 8px 32px rgba(255, 193, 7, 0.3);
+    }
+    .stats-card:nth-child(4) {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        box-shadow: 0 8px 32px rgba(23, 162, 184, 0.3);
+    }
+    
+    .level-indicator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        text-align: center;
+        line-height: 1;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+    }
+    .level-active {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+    
+    /* Compact header: remove large hero section */
+    
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    
+    .form-control-modern {
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    .form-control-modern:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .card-body {
+        padding: 24px;
+    }
+    
+    .workflow-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+    
+    .workflow-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 20px;
+    }
+    
+    .stats-row {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px;
+        margin: 20px 0;
+    }
+    
+    .stats-item {
+        text-align: center;
+        padding: 8px;
+    }
+    .stats-item .number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .stats-item .label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .actions-section {
+        border-top: 1px solid #e9ecef;
+        padding-top: 20px;
+        margin-top: 20px;
+    }
+    
+    .btn-group-modern .btn {
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 0 2px;
+        transition: all 0.3s ease;
+    }
+    .btn-group-modern .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+        border-radius: 24px;
+        border: 2px dashed #cce7ff;
+    }
+    
+    .empty-state .icon {
+        font-size: 4rem;
+        color: #007bff;
+        margin-bottom: 24px;
+        opacity: 0.7;
+    }
+    
+    .pagination-modern .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: none;
+        color: #007bff;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    .pagination-modern .page-link:hover {
+        background: #e3f2fd;
+        transform: translateY(-1px);
+    }
+    .pagination-modern .page-item.active .page-link {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header Section with Gradient Card -->
+  <div class="row mb-4 gradient-header">
+    <div class="col-12">
+      <div class="card bg-gradient-primary text-white shadow-lg border-0">
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h1 class="h2 mb-2">
+                <i class="bi bi-diagram-3 me-3"></i>Gestion des Workflows d'Approbation
+              </h1>
+              <p class="mb-0 opacity-75">Créez, gérez et suivez vos workflows d'approbation</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <a href="{% url 'core:workflow_create' %}" class="btn btn-light me-2">
+                <i class="bi bi-plus-circle me-2"></i>Nouveau Workflow
+              </a>
+              <a href="{% url 'core:approval_request_list' %}" class="btn btn-outline-light">
+                <i class="bi bi-list-check me-2"></i>Demandes
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards Row -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Workflows</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_workflows }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-diagram-3 fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Workflows Actifs</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_workflows }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Workflows Inactifs</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_workflows|add:"-"|add:active_workflows }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-slash-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">En Configuration</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_workflows|add:"-"|add:active_workflows|add:"-"|add:active_workflows }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-gear fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Section -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="bi bi-funnel me-2"></i>Filtres Avancés
+      </h6>
+      <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#wfFilterCollapse">
+        <i class="bi bi-chevron-down"></i> Afficher/Masquer
+      </button>
+    </div>
+    <div class="collapse show" id="wfFilterCollapse">
+      <div class="card-body">
+        <form method="get" class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label fw-bold text-muted">
+              <i class="bi bi-search me-1"></i>Recherche
+            </label>
+            <input type="text" id="search" name="search" value="{{ search_query }}" class="form-control form-control-lg" placeholder="Nom, description...">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold text-muted">
+              <i class="bi bi-flag me-1"></i>Statut
+            </label>
+            <select id="status" name="status" class="form-select form-select-lg">
+              <option value="">Tous</option>
+              <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Actifs</option>
+              <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactifs</option>
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <div class="d-grid gap-2 w-100">
+              <button class="btn btn-primary btn-lg" type="submit">
+                <i class="bi bi-search me-2"></i>Appliquer les filtres
+              </button>
+              <a href="{% url 'core:workflow_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise me-2"></i>Réinitialiser
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflows List -->
+  <div class="card shadow">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="bi bi-list-ul me-2"></i>Liste des Workflows
+      </h6>
+      <div class="d-flex gap-2">
+        <span class="badge bg-primary fs-6">{{ total_workflows }} workflows</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        {% for workflow in workflows %}
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card workflow-card h-100 {% if workflow.active %}active{% else %}inactive{% endif %}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h6 class="workflow-title">{{ workflow.name }}</h6>
+                {% if workflow.active %}
+                  <span class="status-badge bg-success">Actif</span>
+                {% else %}
+                  <span class="status-badge bg-secondary">Inactif</span>
+                {% endif %}
+              </div>
+              <p class="workflow-description">{{ workflow.description|default:"Aucune description" }}</p>
+              <div class="mb-3">
+                <span class="badge bg-info me-2 px-3 py-2">
+                  <i class="bi bi-file-earmark me-1"></i>{{ workflow.get_document_type_display }}
+                </span>
+                {% if workflow.amount_threshold > 0 %}
+                <span class="badge bg-warning px-3 py-2">
+                  <i class="bi bi-cash-coin me-1"></i>Seuil: {{ workflow.amount_threshold|floatformat:2 }} MAD
+                </span>
+                {% endif %}
+              </div>
+              <div class="mb-3">
+                <small class="text-muted d-block mb-2 fw-semibold">Niveaux d'approbation:</small>
+                <div class="d-flex flex-wrap">
+                  {% for level in workflow.approval_levels %}
+                  <span class="level-indicator level-active" title="Niveau {{ forloop.counter }}">{{ forloop.counter }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="stats-row">
+                <div class="row">
+                  <div class="col-6 stats-item">
+                    <div class="number text-primary">{{ workflow.request_count }}</div>
+                    <div class="label">Total Demandes</div>
+                  </div>
+                  <div class="col-6 stats-item">
+                    <div class="number text-warning">{{ workflow.active_requests }}</div>
+                    <div class="label">En Attente</div>
+                  </div>
+                </div>
+              </div>
+              <div class="actions-section">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <small class="text-muted"><i class="bi bi-calendar me-1"></i>{{ workflow.created_at|date:"d/m/Y" }}</small>
+                  </div>
+                  <div class="btn-group btn-group-modern">
+                    <a href="{% url 'core:workflow_detail' workflow.pk %}" class="btn btn-outline-primary"><i class="bi bi-eye"></i></a>
+                    <a href="{% url 'core:workflow_edit' workflow.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-diagram-3 fa-3x mb-3"></i>
+            <h5>Aucun workflow trouvé</h5>
+            <p>Commencez par créer votre premier workflow d'approbation.</p>
+            <a href="{% url 'core:workflow_create' %}" class="btn btn-primary btn-lg"><i class="bi bi-plus-circle me-2"></i>Créer un workflow</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if workflows.has_other_pages %}
+  <nav aria-label="Pagination des workflows" class="mt-4">
+    <ul class="pagination justify-content-center pagination-modern">
+      {% if workflows.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ workflows.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}">Précédent</a>
+      </li>
+      {% endif %}
+      {% for num in workflows.paginator.page_range %}
+        {% if workflows.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > workflows.number|add:'-3' and num < workflows.number|add:'3' %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}&search={{ search_query }}&status={{ status_filter }}">{{ num }}</a></li>
+        {% endif %}
+      {% endfor %}
+      {% if workflows.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ workflows.next_page_number }}&search={{ search_query }}&status={{ status_filter }}">Suivant</a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    document.getElementById('status').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    // Search with delay
+    let searchTimeout;
+    document.getElementById('search').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.form.submit();
+        }, 500);
+    });
+    
+    // Add smooth animations to cards
+    const cards = document.querySelectorAll('.workflow-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+    
+    cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'all 0.6s ease';
+        observer.observe(card);
+    });
+});
+</script>
+{% endblock %}

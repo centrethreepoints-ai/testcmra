@@ -1,0 +1,22 @@
+{% load widget_tweaks %}
+<tr class="line-row" hx-get="{% url 'billing:product_price' %}?index={{ index }}" hx-trigger="change from:.line-product" hx-include="closest tr" hx-swap="none">
+  <td>
+    {{ form.product|add_class:'form-select line-product' }}
+  </td>
+  <td>
+    <span id="description-{{ index }}">{{ form.description|add_class:'form-control' }}</span>
+  </td>
+  <td>
+    {{ form.quantity|add_class:'form-control text-end' }}
+  </td>
+  <td>
+    <span id="unit-price-{{ index }}">{{ form.unit_price_ht|add_class:'form-control text-end line-unit-price' }}</span>
+  </td>
+  <td>
+    {{ form.discount_percent|add_class:'form-control text-end' }}
+  </td>
+  <td>
+    {{ form.tax_rate|add_class:'form-select' }}
+  </td>
+</tr>
+<input type="hidden" id="id_lines-TOTAL_FORMS" name="lines-TOTAL_FORMS" value="{{ new_total }}" hx-swap-oob="true" />

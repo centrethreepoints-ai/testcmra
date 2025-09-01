@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if workflow %}Modifier le Workflow{% else %}Nouveau Workflow{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .workflow-form {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 30px;
+    }
+    .level-config {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .level-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .level-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .level-number {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #007bff;
+        color: white;
+        text-align: center;
+        line-height: 30px;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    .remove-level {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 1.2em;
+    }
+    .remove-level:hover {
+        color: #c82333;
+    }
+    .add-level-btn {
+        border: 2px dashed #dee2e6;
+        background: transparent;
+        color: #6c757d;
+        transition: all 0.3s;
+    }
+    .add-level-btn:hover {
+        border-color: #007bff;
+        color: #007bff;
+        background: rgba(0,123,255,0.1);
+    }
+    .preview-section {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                {% if workflow %}
+                    ✏️ Modifier le Workflow
+                {% else %}
+                    ➕ Nouveau Workflow d'Approbation
+                {% endif %}
+            </h1>
+            <p class="text-muted">
+                {% if workflow %}
+                    Modifiez la configuration de votre workflow
+                {% else %}
+                    Créez un nouveau processus d'approbation
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'core:workflow_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Retour aux Workflows
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Workflow Form -->
+            <div class="workflow-form">
+                <form method="post" id="workflowForm">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Nom du Workflow *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ workflow.name|default:'' }}" required>
+                            <div class="form-text">Nom unique pour identifier le workflow</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="document_type" class="form-label">Type de Document *</label>
+                            <select class="form-select" id="document_type" name="document_type" required>
+                                <option value="">Sélectionnez un type</option>
+                                {% for value, label in document_types %}
+                                    <option value="{{ value }}" {% if workflow.document_type == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Type de document concerné par ce workflow</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="amount_threshold" class="form-label">Seuil de montant (MAD)</label>
+                            <input type="number" class="form-control" id="amount_threshold" name="amount_threshold" 
+                                   value="{{ workflow.amount_threshold|default:0 }}" min="0" step="0.01">
+                            <div class="form-text">Montant minimum pour déclencher l'approbation (0 = toujours)</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Statut</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="active" name="active" 
+                                       {% if workflow.active or not workflow %}checked{% endif %}>
+                                <label class="form-check-label" for="active">
+                                    Workflow actif
+                                </label>
+                            </div>
+                            <div class="form-text">Activez le workflow pour l'utiliser</div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Description détaillée du workflow...">{{ workflow.description|default:'' }}</textarea>
+                            <div class="form-text">Description du processus d'approbation</div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Approval Levels Configuration -->
+                    <h5 class="mb-3">📋 Configuration des Niveaux d'Approbation</h5>
+                    <p class="text-muted">Définissez les étapes d'approbation et les rôles requis</p>
+                    
+                    <div id="approvalLevels">
+                        <!-- Levels will be added here dynamically -->
+                    </div>
+                    
+                    <button type="button" class="btn add-level-btn w-100 py-3" onclick="addApprovalLevel()">
+                        <i class="bi bi-plus-circle"></i> Ajouter un Niveau d'Approbation
+                    </button>
+                    
+                    <!-- Hidden field for approval levels JSON -->
+                    <input type="hidden" id="approval_levels_json" name="approval_levels" value="">
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> 
+                            {% if workflow %}Mettre à Jour{% else %}Créer{% endif %} le Workflow
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Preview Section -->
+            <div class="preview-section">
+                <h6 class="mb-3">👁️ Aperçu du Workflow</h6>
+                <div id="workflowPreview">
+                    <p class="text-muted">Configurez le workflow pour voir l'aperçu</p>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">❓ Aide</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Niveaux d'Approbation</strong>
+                        <small class="d-block text-muted">Définissez qui doit approuver à chaque étape</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Seuil de Montant</strong>
+                        <small class="d-block text-muted">Montant minimum pour déclencher l'approbation</small>
+                    </div>
+                    <div>
+                        <strong>Types de Documents</strong>
+                        <small class="d-block text-muted">Sélectionnez le type de document concerné</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Example Workflow -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">💡 Exemple</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        <strong>Workflow Factures > 1000 MAD</strong><br>
+                        • Niveau 1: Chef de service<br>
+                        • Niveau 2: Directeur financier<br>
+                        • Niveau 3: DG
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let approvalLevels = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize with existing levels if editing
+    {% if workflow and workflow.approval_levels %}
+        approvalLevels = {{ workflow.approval_levels|safe }};
+        renderApprovalLevels();
+    {% else %}
+        // Add default first level
+        addApprovalLevel();
+    {% endif %}
+    
+    // Update preview on form changes
+    document.getElementById('name').addEventListener('input', updatePreview);
+    document.getElementById('document_type').addEventListener('change', updatePreview);
+    document.getElementById('amount_threshold').addEventListener('input', updatePreview);
+    
+    // Form validation
+    document.getElementById('workflowForm').addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+
+function addApprovalLevel() {
+    const level = {
+        id: Date.now(),
+        name: '',
+        role: '',
+        approval_type: 'single', // single, multiple, any
+        users: [],
+        groups: []
+    };
+    
+    approvalLevels.push(level);
+    renderApprovalLevels();
+    updatePreview();
+}
+
+function removeApprovalLevel(levelId) {
+    approvalLevels = approvalLevels.filter(level => level.id !== levelId);
+    renderApprovalLevels();
+    updatePreview();
+}
+
+function updateLevelField(levelId, field, value) {
+    const level = approvalLevels.find(l => l.id === levelId);
+    if (level) {
+        level[field] = value;
+        updatePreview();
+    }
+}
+
+function renderApprovalLevels() {
+    const container = document.getElementById('approvalLevels');
+    container.innerHTML = '';
+    
+    approvalLevels.forEach((level, index) => {
+        const levelHtml = `
+            <div class="level-item" data-level-id="${level.id}">
+                <span class="remove-level" onclick="removeApprovalLevel(${level.id})">
+                    <i class="bi bi-x-circle"></i>
+                </span>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <span class="level-number">${index + 1}</span>
+                    <h6 class="mb-0">Niveau ${index + 1}</h6>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nom du Niveau</label>
+                        <input type="text" class="form-control" 
+                               value="${level.name || ''}"
+                               onchange="updateLevelField(${level.id}, 'name', this.value)"
+                               placeholder="Ex: Validation Manager">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Type d'Approbation</label>
+                        <select class="form-select" 
+                                onchange="updateLevelField(${level.id}, 'approval_type', this.value)">
+                            <option value="single" ${level.approval_type === 'single' ? 'selected' : ''}>
+                                Une seule approbation
+                            </option>
+                            <option value="multiple" ${level.approval_type === 'multiple' ? 'selected' : ''}>
+                                Toutes les approbations
+                            </option>
+                            <option value="any" ${level.approval_type === 'any' ? 'selected' : ''}>
+                                N'importe quelle approbation
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Rôle Requis</label>
+                        <input type="text" class="form-control" 
+                               value="${level.role || ''}"
+                               onchange="updateLevelField(${level.id}, 'role', this.value)"
+                               placeholder="Ex: MANAGER, FINANCE">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Niveau d'Approbation</label>
+                        <input type="number" class="form-control" 
+                               value="${level.approval_level || index + 1}"
+                               onchange="updateLevelField(${level.id}, 'approval_level', this.value)"
+                               min="1" max="10">
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', levelHtml);
+    });
+    
+    // Update hidden field
+    document.getElementById('approval_levels_json').value = JSON.stringify(approvalLevels);
+}
+
+function updatePreview() {
+    const name = document.getElementById('name').value || 'Nom du Workflow';
+    const documentType = document.getElementById('document_type');
+    const documentTypeText = documentType.options[documentType.selectedIndex]?.text || 'Type de Document';
+    const amountThreshold = document.getElementById('amount_threshold').value || '0';
+    
+    let previewHtml = `
+        <div class="mb-3">
+            <strong>${name}</strong><br>
+            <small class="text-muted">${documentTypeText}</small>
+        </div>
+    `;
+    
+    if (amountThreshold > 0) {
+        previewHtml += `
+            <div class="mb-3">
+                <span class="badge bg-warning">
+                    <i class="bi bi-cash-coin"></i> Seuil: ${amountThreshold} MAD
+                </span>
+            </div>
+        `;
+    }
+    
+    if (approvalLevels.length > 0) {
+        previewHtml += '<div class="mb-3"><strong>Niveaux d\'approbation:</strong></div>';
+        approvalLevels.forEach((level, index) => {
+            previewHtml += `
+                <div class="mb-2">
+                    <span class="badge bg-primary me-1">${index + 1}</span>
+                    ${level.name || `Niveau ${index + 1}`}
+                    <small class="text-muted d-block">${level.role || 'Rôle non défini'}</small>
+                </div>
+            `;
+        });
+    }
+    
+    document.getElementById('workflowPreview').innerHTML = previewHtml;
+}
+
+function validateForm() {
+    const name = document.getElementById('name').value.trim();
+    const documentType = document.getElementById('document_type').value;
+    
+    if (!name) {
+        alert('Veuillez saisir un nom pour le workflow');
+        return false;
+    }
+    
+    if (!documentType) {
+        alert('Veuillez sélectionner un type de document');
+        return false;
+    }
+    
+    if (approvalLevels.length === 0) {
+        alert('Veuillez ajouter au moins un niveau d\'approbation');
+        return false;
+    }
+    
+    // Validate each level
+    for (let i = 0; i < approvalLevels.length; i++) {
+        const level = approvalLevels[i];
+        if (!level.name.trim()) {
+            alert(`Veuillez saisir un nom pour le niveau ${i + 1}`);
+            return false;
+        }
+        if (!level.role.trim()) {
+            alert(`Veuillez saisir un rôle pour le niveau ${i + 1}`);
+            return false;
+        }
+    }
+    
+    return true;
+}
+</script>
+{% endblock %}

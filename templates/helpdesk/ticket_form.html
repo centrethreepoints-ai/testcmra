@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouveau ticket{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-life-preserver"></i> Nouveau ticket</h5>
+          <a href="{% url 'helpdesk:ticket_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour</a>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Titre</label>
+              <input class="form-control" type="text" name="title" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" name="description" rows="5"></textarea>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Priorité</label>
+                <select class="form-select" name="priority">
+                  <option value="low">Faible</option>
+                  <option value="normal" selected>Normale</option>
+                  <option value="high">Élevée</option>
+                  <option value="urgent">Urgente</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">SLA</label>
+                <select class="form-select" name="sla">
+                  <option value="">(Aucun)</option>
+                  {% for s in slas %}
+                  <option value="{{ s.id }}">{{ s.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="mt-4 d-flex justify-content-end gap-2">
+              <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Enregistrer</button>
+              <a class="btn btn-outline-secondary" href="{% url 'helpdesk:ticket_list' %}">Annuler</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

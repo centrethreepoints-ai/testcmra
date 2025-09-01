@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Session Inventaire - {{ session.name }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3><i class="bi bi-clipboard-data"></i> {{ session.name }}</h3>
+      <div>
+        <span class="badge bg-secondary">{{ session.get_status_display }}</span>
+        {% if session.is_blind %}<span class="badge bg-dark">Blind</span>{% endif %}
+        {% if session.freeze_stock %}<span class="badge bg-warning text-dark">Gel</span>{% endif %}
+        {% if session.tolerance_percent %}<span class="badge bg-info">Tolérance {{ session.tolerance_percent }}%</span>{% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'catalog:inventory_session_list' %}" class="btn btn-outline-secondary btn-sm">Retour</a>
+      {% if session.status == 'draft' %}
+      <form method="post" action="{% url 'catalog:inventory_session_start' session.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-play"></i> Démarrer</button>
+      </form>
+      {% endif %}
+      {% if session.status == 'active' %}
+      <form method="post" action="{% url 'catalog:inventory_session_close' session.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-success btn-sm" type="submit"><i class="bi bi-stop"></i> Clôturer</button>
+      </form>
+      {% endif %}
+      {% if session.status in 'active,closed' %}
+      <form method="post" action="{% url 'catalog:inventory_session_apply' session.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-danger btn-sm" type="submit"><i class="bi bi-clipboard2-check"></i> Appliquer ajustements</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar" role="progressbar" style="width: {{ progress.percent }}%"></div>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <small class="text-muted">{{ progress.counted }}/{{ progress.total }} comptés, {{ progress.validated }} validés</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="table-responsive">
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Catégorie</th>
+            <th class="text-end">Snapshot</th>
+            <th class="text-end">Compté</th>
+            <th class="text-end">Écart</th>
+            <th>Assigné</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in counts %}
+          <tr>
+            <td>{{ c.product.name }}</td>
+            <td>{{ c.product.category.name|default:'—' }}</td>
+            <td class="text-end">{% if session.is_blind %}—{% else %}{{ c.snapshot_qty }}{% endif %}</td>
+            <td class="text-end" style="max-width:120px">
+              {% if session.status == 'active' %}
+                <input type="number" min="0" class="form-control form-control-sm" name="count_{{ c.id }}" value="{{ c.counted_qty|default:'' }}">
+              {% else %}
+                {{ c.counted_qty|default:'—' }}
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% with v=c.variance %}
+                <span class="{% if v > 0 %}text-success{% elif v < 0 %}text-danger{% else %}text-muted{% endif %}">{{ v }}</span>
+              {% endwith %}
+            </td>
+            <td>
+              {% if c.assigned_to %}
+                {{ c.assigned_to.get_full_name|default:c.assigned_to.email|default:c.assigned_to.username }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td><span class="badge bg-light text-dark">{{ c.get_status_display }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">Aucune ligne</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% if session.status == 'active' %}
+      <div class="p-3 text-end">
+        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-save"></i> Enregistrer</button>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}
+

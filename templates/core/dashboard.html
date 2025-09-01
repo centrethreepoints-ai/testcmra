@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Tableau de bord - CRM Maroc{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-speedometer2"></i> Tableau de bord
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-calendar"></i> {{ month_start|date:"F Y" }}
+            </button>
+        </div>
+    </div>
+</div>
+
+{% if company %}
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Chiffre d'affaires ({{ month_start|date:"M Y" }})
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ monthly_ca|floatformat:2 }} {{ company_currency }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-currency-exchange fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            TVA collectée ({{ month_start|date:"M Y" }})
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ monthly_tva|floatformat:2 }} {{ company_currency }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-receipt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Créances clients
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ customer_balance|floatformat:2 }} {{ company_currency }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Dettes fournisseurs
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ supplier_balance|floatformat:2 }} {{ company_currency }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-truck fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Évolution du CA</h6>
+                <div>
+                  <a href="?period=month" class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">Mois</a>
+                  <a href="?period=year" class="btn btn-sm {% if period != 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">Année</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height:260px">
+                  <canvas id="caChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Répartition par type</h6>
+            </div>
+            <div class="card-body">
+                <div style="height:220px">
+                  <canvas id="typeChart"></canvas>
+                </div>
+                <div class="small text-muted mt-2">
+                  Ventes: {{ sales_total|floatformat:2 }} {{ company_currency }} • Achats: {{ purchase_total|floatformat:2 }} {{ company_currency }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Row -->
+<div class="row">
+    <!-- Factures impayées -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-exclamation-triangle"></i> Factures impayées
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if unpaid_invoices %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>N° Facture</th>
+                                    <th>Client</th>
+                                    <th>Montant</th>
+                                    <th>Échéance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in unpaid_invoices %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="text-decoration-none">
+                                            {{ invoice.number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ invoice.party.name }}</td>
+                                    <td>{{ invoice.total_ttc|floatformat:2 }} {{ company_currency }}</td>
+                                    <td>
+                                        <span class="badge {% if invoice.due_date < now %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ invoice.due_date|date:"d/m/Y" }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'billing:invoice_list' %}?status=unpaid" class="btn btn-sm btn-outline-primary">
+                            Voir toutes les factures impayées
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle fa-3x mb-3"></i>
+                        <p>Aucune facture impayée</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Derniers paiements -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-cash-coin"></i> Derniers paiements
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if recent_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Partie</th>
+                                    <th>Montant</th>
+                                    <th>Méthode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.date|date:"d/m/Y" }}</td>
+                                    <td>{{ payment.party.name }}</td>
+                                    <td>{{ payment.amount|floatformat:2 }} {{ company_currency }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ payment.get_method_display }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'billing:payment_list' %}" class="btn btn-sm btn-outline-primary">
+                            Voir tous les paiements
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-cash-coin fa-3x mb-3"></i>
+                        <p>Aucun paiement récent</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- No Company Selected -->
+<div class="text-center py-5">
+    <i class="bi bi-building fa-5x text-muted mb-4"></i>
+    <h3 class="text-muted">Aucune société sélectionnée</h3>
+    <p class="text-muted">Veuillez contacter votre administrateur pour configurer votre société.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Chart.js configuration
+document.addEventListener('DOMContentLoaded', function() {
+    {% if company %}
+    // Helper to safely create/destroy charts
+    function ensureChart(ctxId, createFn){
+        const el = document.getElementById(ctxId);
+        if (!el) return null;
+        if (el._chart) { try { el._chart.destroy(); } catch(e){} }
+        const ctx = el.getContext('2d');
+        const inst = createFn(ctx);
+        el._chart = inst;
+        return inst;
+    }
+
+    // CA Chart (real data)
+    ensureChart('caChart', (ctx) => new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: "Chiffre d'affaires",
+                data: {{ chart_values|safe }},
+                borderColor: 'rgb(102, 126, 234)',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true }}}
+    }));
+
+    // Type Chart (sales vs purchases)
+    ensureChart('typeChart', (ctx) => new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Ventes', 'Achats'],
+            datasets: [{
+                data: [{{ sales_total|default:0 }}, {{ purchase_total|default:0 }}],
+                backgroundColor: ['#0d6efd', '#fd7e14'],
+                borderColor: ['#0b5ed7', '#e76300'],
+                hoverBackgroundColor: ['#3d8bfd', '#ff8f3f'],
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }}}
+    }));
+    {% endif %}
+});
+</script>
+{% endblock %}

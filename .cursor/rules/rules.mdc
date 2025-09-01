@@ -1,0 +1,24 @@
+description: >
+  Règles pour le projet CRM comptable (style Odoo). 
+  L'objectif est de créer un système complet de gestion d'entreprise : 
+  clients, factures, devis, bons de commande, TVA, comptabilité marocaine, 
+  gestion de stock, gestion de projets, gestion de paie, rapports financiers, etc.
+globs:
+  - "**/*.py"
+  - "**/*.html"
+  - "**/*.js"
+  - "**/*.json"
+alwaysApply: true
+
+rules:
+  - "Toujours utiliser Django (backend), PostgreSQL (DB) et Tailwind/JS (frontend)."
+  - "Respecter les normes comptables marocaines (TVA, facturation, devis, bons de commande)."
+  - "Inclure une authentification sécurisée (JWT/Session)."
+  - "Prévoir un tableau de bord central avec accès rapide aux modules (clients, factures, compta, paie)."
+  - "Créer des APIs RESTful (DRF) pour tous les modules."
+  - "Respecter la structure MVC (Django app = module compta, module clients, module factures...)."
+  - "Toujours prévoir l’export des factures et rapports en PDF/Excel."
+  - "Respecter la logique CRUD complète (Create, Read, Update, Delete)."
+  - "Toujours documenter le code avec docstrings et commentaires."
+  - "Ne pas utiliser de code inutile ou non relié à la comptabilité/ERP."
+  - "Toujours prévoir une compatibilité multi-entreprise et multi-utilisateur."

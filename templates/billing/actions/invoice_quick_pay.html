@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container py-4">
+  <h3>Paiement rapide pour {{ invoice.number }}</h3>
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Montant</label>
+        {{ form.amount|add_class:'form-control' }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Méthode</label>
+        {{ form.method|add_class:'form-select' }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Référence</label>
+        {{ form.reference|add_class:'form-control' }}
+      </div>
+    </div>
+    <div class="mt-3">
+      <button class="btn btn-success" type="submit">Enregistrer le paiement</button>
+      <a class="btn btn-secondary" href="{% url 'billing:invoice_detail' invoice.pk %}">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

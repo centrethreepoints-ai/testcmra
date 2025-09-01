@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alertes de Stock{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-header h1, .gradient-header h2, .gradient-header p { color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+    .alert-card {
+        border-left: 4px solid;
+        transition: transform 0.2s;
+    }
+    .alert-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .alert-low-stock {
+        border-left-color: #ffc107;
+    }
+    .alert-out-of-stock {
+        border-left-color: #dc3545;
+    }
+    .stock-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    .stock-normal { background-color: #28a745; }
+    .stock-low { background-color: #ffc107; }
+    .stock-out { background-color: #dc3545; }
+    .priority-high {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+    }
+    .priority-medium {
+        background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+        color: white;
+    }
+    .priority-low {
+        background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4 gradient-header">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white shadow-lg border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-1">🚨 Alertes de Stock</h1>
+                            <p class="mb-0 opacity-75">Surveillez les produits nécessitant une attention immédiate</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'catalog:stock_list' %}" class="btn btn-outline-light btn-modern me-2">
+                                <i class="bi bi-arrow-left"></i> Retour aux Stocks
+                            </a>
+                            <a href="{% url 'catalog:stock_adjustment' %}" class="btn btn-light btn-modern">
+                                <i class="bi bi-plus-circle"></i> Ajuster Stock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card priority-high">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ out_of_stock_count }}</h2>
+                    <p class="mb-0">Produits en Rupture</p>
+                    <small>Action immédiate requise</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card priority-medium">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ low_stock_count }}</h2>
+                    <p class="mb-0">Stock Bas</p>
+                    <small>Commande recommandée</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card priority-low">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ out_of_stock_count|add:low_stock_count }}</h2>
+                    <p class="mb-0">Total Alertes</p>
+                    <small>Produits à surveiller</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Out of Stock Section -->
+    {% if out_of_stock_products %}
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-triangle-fill"></i> 
+                Produits en Rupture de Stock ({{ out_of_stock_count }})
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for product in out_of_stock_products %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card alert-card alert-out-of-stock h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ product.name }}</h6>
+                                <span class="badge bg-danger">Rupture</span>
+                            </div>
+                            
+                            {% if product.category %}
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-tag"></i> {{ product.category.name }}
+                                </p>
+                            {% endif %}
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h6 class="mb-0 text-danger">{{ product.current_stock }}</h6>
+                                        <small class="text-muted">Actuel</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h6 class="mb-0 text-warning">{{ product.min_stock }}</h6>
+                                        <small class="text-muted">Minimum</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <h6 class="mb-0 text-success">{{ product.max_stock }}</h6>
+                                    <small class="text-muted">Maximum</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Stock Progress Bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Stock</small>
+                                    <small>0%</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if product.sku %}
+                                        <small class="text-muted d-block">SKU: {{ product.sku }}</small>
+                                    {% endif %}
+                                    {% if product.barcode %}
+                                        <small class="text-muted d-block">Code: {{ product.barcode }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'catalog:stock_adjustment' %}?product={{ product.id }}" 
+                                       class="btn btn-danger">
+                                        <i class="bi bi-plus-circle"></i> Réapprovisionner
+                                    </a>
+                                    <a href="{% url 'catalog:product_detail' product.pk %}" 
+                                       class="btn btn-outline-secondary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Low Stock Section -->
+    {% if low_stock_products %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-triangle"></i> 
+                Stock Bas ({{ low_stock_count }})
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for product in low_stock_products %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card alert-card alert-low-stock h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ product.name }}</h6>
+                                <span class="badge bg-warning text-dark">Stock Bas</span>
+                            </div>
+                            
+                            {% if product.category %}
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-tag"></i> {{ product.category.name }}
+                                </p>
+                            {% endif %}
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h6 class="mb-0 text-warning">{{ product.current_stock }}</h6>
+                                        <small class="text-muted">Actuel</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h6 class="mb-0 text-warning">{{ product.min_stock }}</h6>
+                                        <small class="text-muted">Minimum</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <h6 class="mb-0 text-success">{{ product.max_stock }}</h6>
+                                    <small class="text-muted">Maximum</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Stock Progress Bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Stock</small>
+                                    <small>
+                                        {% if product.max_stock > 0 %}
+                                            {{ product.current_stock|floatformat:0 }}/{{ product.max_stock|floatformat:0 }}
+                                        {% else %}
+                                            {{ product.current_stock|floatformat:0 }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" 
+                                         style="width: 30%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Days Until Out of Stock -->
+                            {% if product.current_stock > 0 %}
+                            <div class="alert alert-warning alert-sm mb-3">
+                                <small>
+                                    <i class="bi bi-clock"></i> 
+                                    Stock critique - Réapprovisionnement recommandé
+                                </small>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if product.sku %}
+                                        <small class="text-muted d-block">SKU: {{ product.sku }}</small>
+                                    {% endif %}
+                                    {% if product.barcode %}
+                                        <small class="text-muted d-block">Code: {{ product.barcode }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'catalog:stock_adjustment' %}?product={{ product.id }}" 
+                                       class="btn btn-warning">
+                                        <i class="bi bi-plus-circle"></i> Réapprovisionner
+                                    </a>
+                                    <a href="{% url 'catalog:product_detail' product.pk %}" 
+                                       class="btn btn-outline-secondary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- No Alerts Message -->
+    {% if not out_of_stock_products and not low_stock_products %}
+    <div class="text-center py-5">
+        <div class="text-success">
+            <i class="bi bi-check-circle display-1"></i>
+            <h3 class="mt-3">Aucune Alerte de Stock</h3>
+            <p class="text-muted">Tous vos produits ont des niveaux de stock appropriés</p>
+        </div>
+        <div class="mt-4">
+            <a href="{% url 'catalog:stock_list' %}" class="btn btn-primary me-2">
+                <i class="bi bi-box-seam"></i> Voir Tous les Stocks
+            </a>
+            <a href="{% url 'catalog:stock_movements' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-clock-history"></i> Historique des Mouvements
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    {% if out_of_stock_products or low_stock_products %}
+    <div class="card">
+        <div class="card-body text-center">
+            <h5 class="mb-3">Actions Recommandées</h5>
+            <div class="row justify-content-center">
+                <div class="col-md-3 mb-2">
+                    <a href="{% url 'catalog:stock_adjustment' %}" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> Ajuster Stock
+                    </a>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <a href="{% url 'catalog:stock_movements' %}" class="btn btn-outline-info w-100">
+                        <i class="bi bi-clock-history"></i> Voir Historique
+                    </a>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <a href="{% url 'catalog:stock_list' %}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-box-seam"></i> Tous les Stocks
+                    </a>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <button class="btn btn-outline-success w-100" onclick="exportAlerts()">
+                        <i class="bi bi-download"></i> Exporter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh every 5 minutes to keep alerts current
+    setInterval(function() {
+        // You could implement a more sophisticated refresh here
+        console.log('Checking for new stock alerts...');
+    }, 300000);
+});
+
+function exportAlerts() {
+    // This would typically generate a CSV or PDF report
+    alert('Fonctionnalité d\'export à implémenter');
+}
+
+// Add any additional JavaScript for real-time updates or notifications
+</script>
+{% endblock %}

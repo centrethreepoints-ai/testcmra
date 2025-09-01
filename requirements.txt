@@ -1,0 +1,62 @@
+# Django Core
+Django==5.0.2
+djangorestframework==3.15.0
+djangorestframework-simplejwt==5.3.1
+
+# Database
+psycopg2-binary==2.9.9
+redis==5.0.1
+django-redis==5.4.0
+
+# Task Queue
+celery==5.3.4
+django-celery-beat==2.5.0
+django-celery-results==2.5.1
+
+# Frontend & UI
+django-htmx==1.17.2
+django-tailwind==3.8.0
+django-bootstrap5==23.3
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-widget-tweaks==1.5.0
+
+# PDF Generation
+weasyprint==61.2
+
+# Storage & Media
+django-storages==1.14.2
+Pillow==10.2.0
+qrcode==7.4.2
+
+# API & Security
+django-cors-headers==4.3.1
+django-filter==23.5
+django-tables2==2.7.0
+django-ratelimit==4.1.0
+django-axes==6.3.0
+
+# Development & Debug
+django-extensions==3.2.3
+django-debug-toolbar==4.3.0
+django-simple-history==3.4.0
+django-import-export==3.3.6
+
+# Utilities
+python-decouple==3.8
+whitenoise==6.6.0
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.4
+pytest-django==4.7.0
+factory-boy==3.3.0
+coverage==7.4.1
+
+# Code Quality
+black==23.12.1
+flake8==7.0.0
+isort==5.13.2
+
+# Production
+gunicorn==21.2.0

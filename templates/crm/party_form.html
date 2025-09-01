@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Créer / Modifier une partie</h3>
+    <div>
+      <a href="{% url 'crm:party_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour à la liste
+      </a>
+    </div>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Informations de base -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-person-badge"></i> Informations de base</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Nom / Raison sociale</label>
+            {{ form.name|add_class:'form-control' }}
+            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6"></div>
+
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            {{ form.email|add_class:'form-control' }}
+            {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Téléphone</label>
+            {{ form.phone|add_class:'form-control' }}
+            {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Mobile</label>
+            {{ form.mobile|add_class:'form-control' }}
+            {% if form.mobile.errors %}<div class="text-danger small">{{ form.mobile.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informations légales -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-file-earmark-text"></i> Informations légales</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">ICE</label>
+            {{ form.ice|add_class:'form-control' }}
+            {% if form.ice.errors %}<div class="text-danger small">{{ form.ice.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">IF</label>
+            {{ form.if_field|add_class:'form-control' }}
+            {% if form.if_field.errors %}<div class="text-danger small">{{ form.if_field.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">RC</label>
+            {{ form.rc|add_class:'form-control' }}
+            {% if form.rc.errors %}<div class="text-danger small">{{ form.rc.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Adresses -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-geo-alt"></i> Adresses</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Adresse de facturation</label>
+            {{ form.billing_address|add_class:'form-control' }}
+            {% if form.billing_address.errors %}<div class="text-danger small">{{ form.billing_address.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Adresse de livraison</label>
+            {{ form.shipping_address|add_class:'form-control' }}
+            {% if form.shipping_address.errors %}<div class="text-danger small">{{ form.shipping_address.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Ville</label>
+            {{ form.city|add_class:'form-control' }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Code postal</label>
+            {{ form.postal_code|add_class:'form-control' }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Pays</label>
+            {{ form.country|add_class:'form-control' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conditions commerciales -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-cash-coin"></i> Conditions commerciales</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Conditions de paiement (jours)</label>
+            {{ form.payment_terms|add_class:'form-control' }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Limite de crédit</label>
+            {{ form.credit_limit|add_class:'form-control' }}
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check me-4">
+              {{ form.is_customer|add_class:'form-check-input' }}
+              <label class="form-check-label">Client</label>
+            </div>
+            <div class="form-check">
+              {{ form.is_supplier|add_class:'form-check-input' }}
+              <label class="form-check-label">Fournisseur</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes & tags -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <strong><i class="bi bi-card-text"></i> Notes & tags</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Notes</label>
+            {{ form.notes|add_class:'form-control' }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Tags</label>
+            {{ form.tags|add_class:'form-control' }}
+            <div class="form-text">Séparez les tags par des virgules.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <a href="{% url 'crm:party_list' %}" class="btn btn-light">Annuler</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-save"></i> Enregistrer
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

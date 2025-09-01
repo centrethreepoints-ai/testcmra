@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Écriture {{ move.ref }}</h3>
+  <p><strong>Date:</strong> {{ move.date }}</p>
+  <p><strong>Journal:</strong> {{ move.journal.code }} - {{ move.journal.name }}</p>
+  <p><strong>Total Débit:</strong> {{ move.total_debit }} | <strong>Total Crédit:</strong> {{ move.total_credit }}</p>
+  <a href="{% url 'accounting:move_list' %}" class="btn btn-secondary">Retour</a>
+</div>
+{% endblock %}
+

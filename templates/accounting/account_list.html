@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Comptes</h3>
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Nom</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in accounts %}
+      <tr>
+        <td>{{ a.code }}</td>
+        <td>{{ a.name }}</td>
+        <td>{{ a.type }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="text-center text-muted">Aucun compte</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
