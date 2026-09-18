@@ -7,10 +7,17 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+from users.views import login_view, logout_view
+from core.views import dashboard
 
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
+    
+    # Direct access shortcuts
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
+    path('dashboard/', dashboard, name='dashboard'),
     
     # API v1
     path('api/v1/', include('core.api_urls')),

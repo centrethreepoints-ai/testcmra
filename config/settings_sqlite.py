@@ -159,3 +159,34 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Configuration des fichiers media en local
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# ==============================================================================
+# Configuration pour l'environnement de preview Arena
+# ==============================================================================
+ALLOWED_HOSTS = ['*']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.e2b.app',
+    'http://*.e2b.app',
+    'https://*.arena.ai',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+# Autoriser l'affichage dans l'iframe de prévisualisation
+MIDDLEWARE = [m for m in MIDDLEWARE if m != 'django.middleware.clickjacking.XFrameOptionsMiddleware']
+X_FRAME_OPTIONS = 'ALLOWALL'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+# Support des sessions et cookies dans les iframes de prévisualisation
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+
+# CORS permissif
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# Redirection dashboard
+LOGIN_REDIRECT_URL = '/'
+STATICFILES_STORAGE = 'django.core.files.storage.FileSystemStorage'

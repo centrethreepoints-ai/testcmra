@@ -16,7 +16,14 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
-from weasyprint import HTML
+try:
+    from weasyprint import HTML
+except OSError:  # WeasyPrint nécessite les bibliothèques système Pango
+    def HTML(*args, **kwargs):
+        raise RuntimeError(
+            "WeasyPrint n'est pas disponible (bibliothèques système Pango manquantes). "
+            "L'export PDF est désactivé sur cet environnement."
+        )
 from django.db.models import Sum, Value, DecimalField
 from django.db.models.functions import Coalesce
 from crm.models import Party
